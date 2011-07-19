@@ -1,0 +1,14 @@
+# Description: Library for the AMD GPU Z160 2D 
+# URL: 
+# Maintainer: Victor Martinez, pitillo at ono dot com
+# Arch Maintainer: CRUX-ARM System Team, devel at crux-arm dot nu
+# Depends on: 
+
+name=libz160
+version=10.11.01
+release=1
+source=(http://staff.osuosl.org/~bkero/distfiles/$name-bin-$version.tar.gz)
+
+build() {
+  mv $SRC/$name-bin-$version/usr $PKG/
+}
