@@ -1,0 +1,17 @@
+# Description: platform specific unit tests for mxc platform 
+# URL: 
+# Maintainer: Victor Martinez, pitillo at ono dot com
+# Arch Maintainer: CRUX-ARM System Team, devel at crux-arm dot nu
+# Depends on: 
+
+name=imx-lib
+version=10.11.01
+release=1
+source=(http://repository.timesys.com/buildsources/i/$name/$name-$version/$name-$version.tar.gz)
+
+build() {
+  cd $name-$version
+  rm -rf sahara2/ rng/
+  make -j1 PLATFORM=IMX51 INCLUDE="-I/usr/src/linux-`uname -r`/include"
+  make DEST_DIR=$PKG install
+}
