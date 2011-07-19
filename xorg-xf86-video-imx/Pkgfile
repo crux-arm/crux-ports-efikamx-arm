@@ -13,7 +13,7 @@ source=(http://crux-arm.nu/files/distfiles/efikamx/$name-$version.tar.bz2)
 build() {
   cd xf86-video-imx
   chmod u+x autogen.sh
-  ./autogen.sh --prefix=/usr --disable-nls
+  ./autogen.sh --prefix=/usr --disable-nls --mandir=/usr/man
   make
   make install DESTDIR=$PKG
 }
