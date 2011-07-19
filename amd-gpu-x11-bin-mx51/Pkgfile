@@ -1,0 +1,14 @@
+# Description: GPU libraries and test applications for i.MX51 (X version) 
+# URL: 
+# Maintainer: Victor Martinez, pitillo at ono dot com
+# Arch Maintainer: CRUX-ARM System Team, devel at crux-arm dot nu
+# Depends on: 
+
+name=amd-gpu-x11-bin-mx51
+version=10.11.01
+release=1
+source=(http://staff.osuosl.org/~bkero/distfiles/$name-$version.tar.gz)
+
+build() {
+  mv $SRC/$name-$version/usr $PKG/
+}
