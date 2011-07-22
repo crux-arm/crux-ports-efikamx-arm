@@ -8,7 +8,7 @@
 name=imx-lib
 version=10.11.01
 release=2
-source=(http://repository.timesys.com/buildsources/i/$name/$name-$version/$name-$version.tar.gz)
+source=($name-$version.tar.gz)
 
 build() {
   cd $name-$version
