@@ -8,7 +8,7 @@
 name=libz160
 version=10.11.01
 release=1
-source=(http://staff.osuosl.org/~bkero/distfiles/$name-bin-$version.tar.gz)
+source=($name-bin-$version.tar.gz)
 
 build() {
   mv $SRC/$name-bin-$version/usr $PKG/
