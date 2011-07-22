@@ -7,12 +7,11 @@
 
 name=imx-lib
 version=10.11.01
-release=1
+release=2
 source=(http://repository.timesys.com/buildsources/i/$name/$name-$version/$name-$version.tar.gz)
 
 build() {
   cd $name-$version
-  rm -rf sahara2/ rng/
-  make -j1 PLATFORM=IMX51 INCLUDE="-I/usr/src/linux-`uname -r`/include"
+  make -j1 PLATFORM=IMX51 INCLUDE="-I/usr/src/linux-`uname -r`/include -I/usr/src/linux-`uname -r`/drivers/mxc/security/rng/include -I/usr/src/linux-`uname -r`/drivers/mxc/security/sahara2/include"
   make DEST_DIR=$PKG install
 }
