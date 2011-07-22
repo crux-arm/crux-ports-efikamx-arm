@@ -8,6 +8,8 @@ drwxr-xr-x	root/root	usr/include/
 -rw-r--r--	root/root	usr/include/vpu_lib.h
 drwxr-xr-x	root/root	usr/lib/
 -rwxr-xr-x	root/root	usr/lib/libIpuScreenLayer.so
+-rw-r--r--	root/root	usr/lib/libfsl_shw.a
+-rwxr-xr-x	root/root	usr/lib/libfsl_shw.so
 -rwxr-xr-x	root/root	usr/lib/libipu.so
 -rw-r--r--	root/root	usr/lib/libpxp.a
 -rwxr-xr-x	root/root	usr/lib/libpxp.so
