@@ -1,17 +1,17 @@
 # Description: platform specific unit tests for mxc platform 
-# URL: 
+# URL: https://github.com/genesi/imx-userspace 
 # Packager: CRUX-ARM System Team, devel at crux-arm dot nu
 # Maintainer: CRUX-ARM System Team, devel at crux-arm dot nu
 # Arch Maintainer: CRUX-ARM System Team, devel at crux-arm dot nu
 # Depends on: 
 
 name=imx-lib
-version=10.11.01
-release=2
-source=($name-$version.tar.gz)
+version=20111109
+release=1
+source=(http://crux-arm.nu/files/distfiles/efikamx/$name-$version.tar.bz2)
 
 build() {
-  cd $name-$version
-  make -j1 PLATFORM=IMX51 INCLUDE="-I/usr/src/linux-`uname -r`/include -I/usr/src/linux-`uname -r`/drivers/mxc/security/rng/include -I/usr/src/linux-`uname -r`/drivers/mxc/security/sahara2/include"
-  make DEST_DIR=$PKG install
+  cd $name
+  make -j1 PLATFORM=IMX51 INCLUDE="-I/usr/src/linux-`uname -r`/include"
+  make DESTDIR=$PKG PLATFORM=IMX51 install
 }
