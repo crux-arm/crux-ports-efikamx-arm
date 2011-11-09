@@ -1,0 +1,3 @@
+drwxr-xr-x	root/root	lib/
+drwxr-xr-x	root/root	lib/firmware/
+-rw-r--r--	root/root	lib/firmware/vpu_fw_imx51.bin

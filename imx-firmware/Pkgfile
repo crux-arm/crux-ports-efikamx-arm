@@ -1,0 +1,17 @@
+# Description: i.MX accelerated video firmware
+# URL: https://github.com/genesi/imx-firmwar
+# Packager: CRUX-ARM System Team, devel at crux-arm dot nu
+# Maintainer: CRUX-ARM System Team, devel at crux-arm dot nu
+# Arch Maintainer: CRUX-ARM System Team, devel at crux-arm dot nu
+# Depends on:
+
+name=imx-firmware
+version=20111109
+release=1
+source=(vpu_fw_imx51.bin.ihex)
+
+build() {
+  mkdir -p $PKG/lib/firmware
+  objcopy -Iihex -Obinary vpu_fw_imx51.bin.ihex vpu_fw_imx51.bin
+  install -m0644 vpu_fw_imx51.bin $PKG/lib/firmware
+}
