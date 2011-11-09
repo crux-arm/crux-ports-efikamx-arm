@@ -1,7 +1,0 @@
-
-
-README for imx-lib
-
-ou'll need to download the current source and place it in your 
-$PKGMK_SOURCE_DIR before you can build this port.
-
