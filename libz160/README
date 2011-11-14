@@ -3,7 +3,10 @@
 README for libz160
 
 You'll need to download L2.6.35_10.11.01_ER_images_MX5X.tar.gz from Freescale
-website. Unpack it and place these files in the current dir:
+website. Unpack it, look for libz160-bin_10.11.01-1_armel.deb and unpack it
+too, then place from data.tar.gz these files in the current dir:
 data/usr/include/z160.h
 data/usr/lib/libz160.so
 
+TIPS to unpack .deb files:
+ar vx $name.deb
