@@ -3,9 +3,12 @@
 README for amd-gpu-x11-bin-mx51
 
 You'll need to download L2.6.35_10.11.01_ER_images_MX5X.tar.gz from Freescale
-website. Unpack it, look for amd-gpu-x11-bin-mx51_10.11.01-1_armel.deb. Then
-unpack this file and place this file in the current dir:
-data.tar.gz
+website (http://www.freescale.com/).
+Unpack it, look for amd-gpu-x11-bin-mx51_10.11.01-1_armel.deb and unpack it 
+too, then place data.tar.gz in the port's tree current port directory:
 
-TIPS to unpack .deb files:
-ar vx $name.deb
+Example:
+# tar xvfz L2.6.35_10.11.01_ER_images_MX5X.tar.gz
+# cd L2.6.35_10.11.01_ER_images_MX5X
+# ar vx amd-gpu-x11-bin-mx51_10.11.01-1_armel.deb
+# mv data.tar.gz /usr/ports/efikamx/amd-gpu-x11-bin-mx51/
