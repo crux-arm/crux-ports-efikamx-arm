@@ -2,6 +2,10 @@
 
 README for amd-gpu-x11-bin-mx51
 
-ou'll need to download the current source and place it in your 
-$PKGMK_SOURCE_DIR before you can build this port.
+You'll need to download L2.6.35_10.11.01_ER_images_MX5X.tar.gz from Freescale
+website. Unpack it, look for amd-gpu-x11-bin-mx51_10.11.01-1_armel.deb. Then
+unpack this file and place this file in the current dir:
+data.tar.gz
 
+TIPS to unpack .deb files:
+ar vx $name.deb

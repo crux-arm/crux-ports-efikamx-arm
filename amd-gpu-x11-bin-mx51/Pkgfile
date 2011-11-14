@@ -1,15 +1,16 @@
 # Description: GPU libraries and test applications for i.MX51 (X version) 
-# URL: 
+# URL: http://www.freescale.com/
 # Packager: CRUX-ARM System Team, devel at crux-arm dot nu
 # Maintainer: CRUX-ARM System Team, devel at crux-arm dot nu
 # Arch Maintainer: CRUX-ARM System Team, devel at crux-arm dot nu
 # Depends on: 
 
 name=amd-gpu-x11-bin-mx51
-version=10.11.01
+version=20111109
 release=1
-source=($name-$version.tar.gz)
+source=(data.tar.gz)
 
 build() {
-  mv $SRC/$name-$version/usr $PKG/
+  rm -r $SRC/usr/share/
+  mv $SRC/usr $PKG/
 }
