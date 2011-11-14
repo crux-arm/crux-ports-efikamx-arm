@@ -3,10 +3,16 @@
 README for libz160
 
 You'll need to download L2.6.35_10.11.01_ER_images_MX5X.tar.gz from Freescale
-website. Unpack it, look for libz160-bin_10.11.01-1_armel.deb and unpack it
-too, then place from data.tar.gz these files in the current dir:
+website (http://www.freescale.com/).
+Unpack it, look for libz160-bin_10.11.01-1_armel.deb and unpack it too, then 
+place from data.tar.gz these files in the port's tree current port directory:
 data/usr/include/z160.h
 data/usr/lib/libz160.so
 
-TIPS to unpack .deb files:
-ar vx $name.deb
+Example:
+tar xvfz L2.6.35_10.11.01_ER_images_MX5X.tar.gz
+cd L2.6.35_10.11.01_ER_images_MX5X
+ar vx libz160-bin_10.11.01-1_armel.deb
+tar xvfz data.tar.gz
+mv data/usr/include/z160.h /usr/ports/efikamx/libz160/
+mv data/usr/lib/libz160.so /usr/ports/efikamx/libz160/
