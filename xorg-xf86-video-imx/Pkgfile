@@ -8,11 +8,13 @@
 name=xorg-xf86-video-imx
 version=20111109
 release=1
-source=(http://crux-arm.nu/files/distfiles/efikamx/$name-$version.tar.bz2)
+source=(http://crux-arm.nu/files/distfiles/efikamx/$name-$version.tar.bz2 \
+	xorg-xf86-video-imx_misc.patch)
 
 build() {
   export CFLAGS="$CFLAGS -I/usr/src/linux-`uname -r`/include"
   cd $name-$version
+  patch -p0 -i $SRC/xorg-xf86-video-imx_misc.patch
   chmod u+x autogen.sh
   ./autogen.sh --prefix=/usr
   make
