@@ -8,10 +8,8 @@
 name=libz160
 version=20111109
 release=1
-source=(z160.h libz160.so)
+source=(libz160-bin-10.11.01.tar.gz)
 
 build() {
-  install -d $PKG/usr/{lib,include}
-  mv $SRC/libz160.so $PKG/usr/lib/
-  mv $SRC/z160.h $PKG/usr/include
+  mv libz160-bin-10.11.01/usr/ $PKG
 }

@@ -8,9 +8,8 @@
 name=amd-gpu-x11-bin-mx51
 version=20111109
 release=1
-source=(data.tar.gz)
+source=(amd-gpu-x11-bin-mx51-10.11.01.tar.gz)
 
 build() {
-  rm -r $SRC/usr/share/
-  mv $SRC/usr $PKG/
+  mv amd-gpu-x11-bin-mx51-10.11.01/usr $PKG/
 }

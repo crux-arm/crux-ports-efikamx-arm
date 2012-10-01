@@ -2,17 +2,13 @@
 
 README for libz160
 
-You'll need to download L2.6.35_10.11.01_ER_images_MX5X.tar.gz from Freescale
+You'll need to download L2.6.35_10.11.01_ER_source_bundle.tar.gz from Freescale
 website (http://www.freescale.com/).
-Unpack it, look for libz160-bin_10.11.01-1_armel.deb and unpack it too, then 
-place from data.tar.gz these files in the port's tree current port directory:
-data/usr/include/z160.h
-data/usr/lib/libz160.so
+Unpack it, and will be there two compressed files. We need to unpack the file
+L2.6.35_10.11.01_ER_source.tar.gz and then, will get the packages under pkgs dir.
+Place pkgs/libz160-bin-10.11.01.tar.gz in the current port directory:
 
 Example:
-# tar xvfz L2.6.35_10.11.01_ER_images_MX5X.tar.gz
-# cd L2.6.35_10.11.01_ER_images_MX5X
-# ar vx libz160-bin_10.11.01-1_armel.deb
-# tar xvfz data.tar.gz
-# mv data/usr/include/z160.h /usr/ports/efikamx/libz160/
-# mv data/usr/lib/libz160.so /usr/ports/efikamx/libz160/
+# tar xvfz L2.6.35_10.11.01_ER_source_bundle.tar.gz
+# tar xvfz L2.6.35_10.11.01_ER_source.tar.gz
+# mv L2.6.35_10.11.01_ER_source_bundle/L2.6.35_10.11.01_ER_source/pkgs/libz160-bin-10.11.01.tar.gz /usr/ports/efikamx/libz160/
