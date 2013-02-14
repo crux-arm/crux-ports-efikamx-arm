@@ -6,9 +6,9 @@
 # Depends on: 
 
 name=imx-lib
-version=20111109
+version=20130214
 release=1
-source=(http://crux-arm.nu/files/distfiles/efikamx/$name-$version.tar.bz2)
+source=(http://crux-arm.nu/files/distfiles/efikamx/$name-$version.tar.xz)
 
 build() {
   cd $name
