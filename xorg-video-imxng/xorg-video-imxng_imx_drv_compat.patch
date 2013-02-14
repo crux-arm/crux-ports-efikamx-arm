@@ -1,0 +1,544 @@
+Binary files xorg-video-imxng.orig/.git/index and xorg-video-imxng/.git/index differ
+diff -pruN xorg-video-imxng.orig/src/compat-api.h xorg-video-imxng/src/compat-api.h
+--- xorg-video-imxng.orig/src/compat-api.h	1970-01-01 01:00:00.000000000 +0100
++++ xorg-video-imxng/src/compat-api.h	2013-02-13 01:18:02.808280498 +0100
+@@ -0,0 +1,106 @@
++/*
++ * Copyright 2012 Red Hat, Inc.
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a
++ * copy of this software and associated documentation files (the "Software"),
++ * to deal in the Software without restriction, including without limitation
++ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
++ * and/or sell copies of the Software, and to permit persons to whom the
++ * Software is furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice (including the next
++ * paragraph) shall be included in all copies or substantial portions of the
++ * Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
++ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
++ * DEALINGS IN THE SOFTWARE.
++ *
++ * Author: Dave Airlie <airlied@redhat.com>
++ */
++
++/* this file provides API compat between server post 1.13 and pre it,
++ it should be reused inside as many drivers as possible */
++#ifndef COMPAT_API_H
++#define COMPAT_API_H
++
++#ifndef GLYPH_HAS_GLYPH_PICTURE_ACCESSOR
++#define GetGlyphPicture(g, s) GlyphPicture((g))[(s)->myNum]
++#define SetGlyphPicture(g, s, p) GlyphPicture((g))[(s)->myNum] = p
++#endif
++
++#ifndef XF86_HAS_SCRN_CONV
++#define xf86ScreenToScrn(s) xf86Screens[(s)->myNum]
++#define xf86ScrnToScreen(s) screenInfo.screens[(s)->scrnIndex]
++#endif
++
++#ifndef XF86_SCRN_INTERFACE
++
++#define SCRN_ARG_TYPE int
++#define SCRN_INFO_PTR(arg1) ScrnInfoPtr pScrn = xf86Screens[(arg1)]
++
++#define SCREEN_ARG_TYPE int
++#define SCREEN_PTR(arg1) ScreenPtr pScreen = screenInfo.screens[(arg1)]
++
++#define SCREEN_INIT_ARGS_DECL int index, ScreenPtr pScreen, int argc, char **argv
++
++#define BLOCKHANDLER_ARGS_DECL int arg, pointer blockData, pointer pTimeout, pointer pReadmask
++#define BLOCKHANDLER_ARGS arg, blockData, pTimeout, pReadmask
++
++#define CLOSE_SCREEN_ARGS_DECL int scrnIndex, ScreenPtr pScreen
++#define CLOSE_SCREEN_ARGS scrnIndex, pScreen
++#define CLOSE_SCREEN_DECL_ScrnInfoPtr ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
++
++#define FBDEVHWADJUSTFRAME_ARGS(x, y) scrnIndex, (x), (y), 0
++
++#define ADJUST_FRAME_ARGS_DECL int arg, int x, int y, int flags
++
++#define SWITCH_MODE_ARGS_DECL int arg, DisplayModePtr mode, int flags
++
++#define FREE_SCREEN_ARGS_DECL int arg, int flags
++#define FREE_SCREEN_ARGS(x) (x)->scrnIndex, 0
++
++#define VT_FUNC_ARGS_DECL int arg, int flags
++#define VT_FUNC_ARGS(flags) pScrn->scrnIndex, (flags)
++
++#define ENABLE_DISABLE_FB_ACCESS_ARGS(pScrn, b) pScrn->scrnIndex, b
++
++#define XF86_ENABLEDISABLEFB_ARG(x) ((x)->scrnIndex)
++#else
++#define SCRN_ARG_TYPE ScrnInfoPtr
++#define SCRN_INFO_PTR(arg1) ScrnInfoPtr pScrn = (arg1)
++
++#define SCREEN_ARG_TYPE ScreenPtr
++#define SCREEN_PTR(arg1) ScreenPtr pScreen = (arg1)
++
++#define SCREEN_INIT_ARGS_DECL ScreenPtr pScreen, int argc, char **argv
++
++#define BLOCKHANDLER_ARGS_DECL ScreenPtr arg, pointer pTimeout, pointer pReadmask
++#define BLOCKHANDLER_ARGS arg, pTimeout, pReadmask
++
++#define CLOSE_SCREEN_ARGS_DECL ScreenPtr pScreen
++#define CLOSE_SCREEN_ARGS pScreen
++#define CLOSE_SCREEN_DECL_ScrnInfoPtr ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
++
++#define FBDEVHWADJUSTFRAME_ARGS(x, y) pScrn, (x), (y)
++
++#define ADJUST_FRAME_ARGS_DECL ScrnInfoPtr arg, int x, int y
++#define SWITCH_MODE_ARGS_DECL ScrnInfoPtr arg, DisplayModePtr mode
++
++#define FREE_SCREEN_ARGS_DECL ScrnInfoPtr arg
++#define FREE_SCREEN_ARGS(x) (x)
++
++#define VT_FUNC_ARGS_DECL ScrnInfoPtr arg
++#define VT_FUNC_ARGS(flags) pScrn
++
++#define ENABLE_DISABLE_FB_ACCESS_ARGS(pScrn, b) pScrn, b
++
++#define XF86_ENABLEDISABLEFB_ARG(x) (x)
++
++#endif
++
++#endif
+diff -pruN xorg-video-imxng.orig/src/imx_drv.c xorg-video-imxng/src/imx_drv.c
+--- xorg-video-imxng.orig/src/imx_drv.c	2013-02-13 00:31:37.858284376 +0100
++++ xorg-video-imxng/src/imx_drv.c	2013-02-14 20:37:53.418271127 +0100
+@@ -64,6 +64,8 @@
+ 
+ #include "xf86xv.h"
+ 
++#include "compat-api.h"
++
+ static Bool debug = 0;
+ 
+ #define TRACE_ENTER(str) \
+@@ -80,8 +82,8 @@ static const OptionInfoRec * IMXAvailabl
+ static void	IMXIdentify(int flags);
+ static Bool	IMXProbe(DriverPtr drv, int flags);
+ static Bool	IMXPreInit(ScrnInfoPtr pScrn, int flags);
+-static Bool	IMXScreenInit(int Index, ScreenPtr pScreen, int argc, char **argv);
+-static Bool	IMXCloseScreen(int scrnIndex, ScreenPtr pScreen);
++static Bool	IMXScreenInit(SCREEN_INIT_ARGS_DECL);
++static Bool	IMXCloseScreen(CLOSE_SCREEN_ARGS_DECL);
+ static Bool	IMXDriverFunc(ScrnInfoPtr pScrn, xorgDriverFuncOp op, pointer ptr);
+ 
+ /* for XV acceleration */
+@@ -520,9 +522,9 @@ IMXPreInit(ScrnInfoPtr pScrn, int flags)
+ }
+ 
+ static Bool
+-IMXScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
++IMXScreenInit(SCREEN_INIT_ARGS_DECL)
+ {
+-	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
+ 	IMXPtr fPtr = IMXPTR(pScrn);
+ 	VisualPtr visual;
+ 	int init_picture = 0;
+@@ -540,28 +542,27 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
+ 	       pScrn->mask.red,pScrn->mask.green,pScrn->mask.blue,
+ 	       pScrn->offset.red,pScrn->offset.green,pScrn->offset.blue);
+ #endif
+-
+ 	if (NULL == (fPtr->fbmem = fbdevHWMapVidmem(pScrn))) {
+-	        xf86DrvMsg(scrnIndex,X_ERROR,"mapping of video memory"
+-			   " failed\n");
++		xf86DrvMsg(pScrn->scrnIndex,X_ERROR,"mapping of video memory"
++		" failed\n");
+ 		return FALSE;
+-	}
++      }
+ 	fPtr->fboff = fbdevHWLinearOffset(pScrn);
+ 
+ 	fbdevHWSave(pScrn);
+ 
+ 	if (!fbdevHWModeInit(pScrn, pScrn->currentMode)) {
+-		xf86DrvMsg(scrnIndex,X_ERROR,"mode initialization failed\n");
++		xf86DrvMsg(pScrn->scrnIndex,X_ERROR,"mode initialization failed\n");
+ 		return FALSE;
+ 	}
+ 	fbdevHWSaveScreen(pScreen, SCREEN_SAVER_ON);
+-	fbdevHWAdjustFrame(scrnIndex,0,0,0);
++	fbdevHWAdjustFrame(pScrn, 0, 0);
+ 
+ 	/* mi layer */
+ 	miClearVisualTypes();
+ 	if (pScrn->bitsPerPixel > 8) {
+ 		if (!miSetVisualTypes(pScrn->depth, TrueColorMask, pScrn->rgbBits, TrueColor)) {
+-			xf86DrvMsg(scrnIndex,X_ERROR,"visual type setup failed"
++			xf86DrvMsg(pScrn->scrnIndex,X_ERROR,"visual type setup failed"
+ 				   " for %d bits per pixel [1]\n",
+ 				   pScrn->bitsPerPixel);
+ 			return FALSE;
+@@ -570,14 +571,14 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
+ 		if (!miSetVisualTypes(pScrn->depth,
+ 				      miGetDefaultVisualMask(pScrn->depth),
+ 				      pScrn->rgbBits, pScrn->defaultVisual)) {
+-			xf86DrvMsg(scrnIndex,X_ERROR,"visual type setup failed"
++			xf86DrvMsg(pScrn->scrnIndex,X_ERROR,"visual type setup failed"
+ 				   " for %d bits per pixel [2]\n",
+ 				   pScrn->bitsPerPixel);
+ 			return FALSE;
+ 		}
+ 	}
+ 	if (!miSetPixmapDepths()) {
+-	  xf86DrvMsg(scrnIndex,X_ERROR,"pixmap depth setup failed\n");
++	  xf86DrvMsg(pScrn->scrnIndex,X_ERROR,"pixmap depth setup failed\n");
+ 	  return FALSE;
+ 	}
+ 
+@@ -587,7 +588,7 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
+ 		(pScrn->bitsPerPixel / 8);
+ 
+ 	if (pScrn->displayWidth != pScrn->virtualX) {
+-		xf86DrvMsg(scrnIndex, X_INFO,
++		xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+ 			"Pitch updated to %d after ModeInit\n",
+ 			pScrn->displayWidth);
+ 	}
+@@ -610,7 +611,7 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
+ 			init_picture = 1;
+ 			break;
+ 	 	default:
+-			xf86DrvMsg(scrnIndex, X_ERROR,
++			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+ 				   "internal error: invalid number of bits per"
+ 				   " pixel (%d) encountered in"
+ 				   " IMXScreenInit()\n", pScrn->bitsPerPixel);
+@@ -621,7 +622,7 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
+ 	case FBDEVHW_INTERLEAVED_PLANES:
+ 		/* This should never happen ...
+ 		* we should check for this much much earlier ... */
+-		xf86DrvMsg(scrnIndex, X_ERROR,
++		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+ 		           "internal error: interleaved planes are not yet "
+ 			   "supported by the imx driver\n");
+ 		ret = FALSE;
+@@ -629,20 +630,20 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
+ 	case FBDEVHW_TEXT:
+ 		/* This should never happen ...
+ 		* we should check for this much much earlier ... */
+-		xf86DrvMsg(scrnIndex, X_ERROR,
++		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+ 		           "internal error: text mode is not supported by the "
+ 			   "imx driver\n");
+ 		ret = FALSE;
+ 		break;
+ 	case FBDEVHW_VGA_PLANES:
+ 		/* Not supported yet */
+-		xf86DrvMsg(scrnIndex, X_ERROR,
++		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+ 		           "internal error: EGA/VGA Planes are not yet "
+ 			   "supported by the imx driver\n");
+ 		ret = FALSE;
+ 		break;
+ 	default:
+-		xf86DrvMsg(scrnIndex, X_ERROR,
++		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+ 		           "internal error: unrecognised hardware type (%d) "
+ 			   "encountered in IMXScreenInit()\n", type);
+ 		ret = FALSE;
+@@ -674,9 +675,9 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
+ 	xf86SetBlackWhitePixels(pScreen);
+ 
+ 	/* INITIALIZE ACCELERATION BEFORE INIT FOR BACKING STORE AND SOFTWARE CURSOR */ 
+-	if (!IMX_EXA_ScreenInit(scrnIndex, pScreen)) {
++	if (!IMX_EXA_ScreenInit(pScrn->scrnIndex, pScreen)) {
+ 
+-	    xf86DrvMsg(scrnIndex, X_ERROR,
++	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+ 		       "IMX EXA failed to initialize screen.\n");
+ 	    return FALSE;
+ 	}
+@@ -708,29 +709,29 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
+ 	/* XXX It would be simpler to use miCreateDefColormap() in all cases. */
+ 	case FBDEVHW_PACKED_PIXELS:
+ 		if (!miCreateDefColormap(pScreen)) {
+-			xf86DrvMsg(scrnIndex, X_ERROR,
++			xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                                    "internal error: miCreateDefColormap failed "
+ 				   "in IMXScreenInit()\n");
+ 			return FALSE;
+ 		}
+ 		break;
+ 	case FBDEVHW_INTERLEAVED_PLANES:
+-		xf86DrvMsg(scrnIndex, X_ERROR,
++		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+ 		           "internal error: interleaved planes are not yet "
+ 			   "supported by the imx driver\n");
+ 		return FALSE;
+ 	case FBDEVHW_TEXT:
+-		xf86DrvMsg(scrnIndex, X_ERROR,
++		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+ 		           "internal error: text mode is not supported by "
+ 			   "the imx driver\n");
+ 		return FALSE;
+ 	case FBDEVHW_VGA_PLANES:
+-		xf86DrvMsg(scrnIndex, X_ERROR,
++		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+ 		           "internal error: EGA/VGA planes are not yet "
+ 			   "supported by the imx driver\n");
+ 		return FALSE;
+ 	default:
+-		xf86DrvMsg(scrnIndex, X_ERROR,
++		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+ 		           "internal error: unrecognised imx hardware type "
+ 			   "(%d) encountered in IMXScreenInit()\n", type);
+ 		return FALSE;
+@@ -762,13 +763,12 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
+ }
+ 
+ static Bool
+-IMXCloseScreen(int scrnIndex, ScreenPtr pScreen)
++IMXCloseScreen(CLOSE_SCREEN_ARGS_DECL)
+ {
+-	IMX_EXA_CloseScreen(scrnIndex, pScreen);
+-
+-	ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
++	CLOSE_SCREEN_DECL_ScrnInfoPtr;
+ 	IMXPtr fPtr = IMXPTR(pScrn);
+ 
++	IMX_EXA_CloseScreen(pScrn->scrnIndex, pScreen);
+ 	fbdevHWRestore(pScrn);
+ 	fbdevHWUnmapVidmem(pScrn);
+ 	pScrn->vtSema = FALSE;
+@@ -777,7 +777,7 @@ IMXCloseScreen(int scrnIndex, ScreenPtr
+ 
+ 	IMXFreeRec(pScrn);
+ 
+-	return (*pScreen->CloseScreen)(scrnIndex, pScreen);
++	return (*pScreen->CloseScreen)(CLOSE_SCREEN_ARGS);
+ }
+ 
+ Bool
+@@ -796,7 +796,7 @@ IMXGetPixmapProperties(
+ 	}
+ 
+ 	/* Access screen associated with this pixmap. */
+-	ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmap->drawable.pScreen);
+ 
+ 	/* Check if the screen associated with this pixmap has IMX driver. */
+ 	if (0 != strcmp(IMX_DRIVER_NAME, pScrn->driverName)) {
+diff -pruN xorg-video-imxng.orig/src/imx_exa_c2d.c xorg-video-imxng/src/imx_exa_c2d.c
+--- xorg-video-imxng.orig/src/imx_exa_c2d.c	2013-02-13 00:31:37.868285501 +0100
++++ xorg-video-imxng/src/imx_exa_c2d.c	2013-02-14 18:29:47.368267874 +0100
+@@ -45,6 +45,8 @@
+ 
+ #include "imx_type.h"
+ 
++#include "compat-api.h"
++
+ #if IMX_EXA_VERSION_COMPILED < IMX_EXA_VERSION(2, 5, 0)
+ #error This driver can be built only against EXA version 2.5.0 or higher.
+ #endif
+@@ -1204,7 +1206,7 @@ IMX_EXA_GetPixmapProperties(
+ 		return FALSE;
+ 
+ 	/* Access screen info associated with this pixmap. */
+-	ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmap->drawable.pScreen);
+ 
+ 	/* Access driver specific data associated with the screen. */
+ 	IMXPtr imxPtr = IMXPTR(pScrn);
+@@ -1236,7 +1238,7 @@ IMXEXACreatePixmap2(
+ 	int *pPitch)
+ {
+ 	/* Access screen info associated with this screen. */
+-	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
+ 
+ 	/* Access driver specific data associated with the screen. */
+ 	IMXPtr imxPtr = IMXPTR(pScrn);
+@@ -1372,7 +1374,7 @@ IMXEXADestroyPixmap(
+ 	IMXEXAPixmapPtr fPixmapPtr = (IMXEXAPixmapPtr) driverPriv;
+ 
+ 	/* Access screen info associated with this screen. */
+-	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
+ 
+ 	/* Access driver specific data associated with the screen. */
+ 	IMXPtr imxPtr = IMXPTR(pScrn);
+@@ -1468,7 +1470,7 @@ IMXEXAModifyPixmapHeader(
+ 		return FALSE;
+ 
+ 	/* Access screen info associated with this pixmap. */
+-	ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmap->drawable.pScreen);
+ 
+ 	/* Access driver specific data associated with the screen. */
+ 	IMXPtr imxPtr = IMXPTR(pScrn);
+@@ -1688,7 +1690,7 @@ IMXEXAPrepareAccess(
+ 		return FALSE;
+ 
+ 	/* Access screen info associated with this pixmap. */
+-	ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmap->drawable.pScreen);
+ 
+ 	/* Access driver specific data associated with the screen. */
+ 	IMXPtr imxPtr = IMXPTR(pScrn);
+@@ -1759,7 +1761,7 @@ IMXEXAFinishAccess(
+ 		return;
+ 
+ 	/* Access screen info associated with this pixmap. */
+-	ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmap->drawable.pScreen);
+ 
+ #if 0
+ 	/* Access driver specific data associated with the screen. */
+@@ -1802,7 +1804,7 @@ IMXEXAPrepareSolid(
+ 		return FALSE;
+ 
+ 	/* Access screen info associated with this pixmap */
+-	ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmap->drawable.pScreen);
+ 
+ 	/* Access driver specific data associated with the screen. */
+ 	IMXPtr imxPtr = IMXPTR(pScrn);
+@@ -1900,7 +1902,7 @@ IMXEXASolid(
+ 	int x2, int y2)
+ {
+ 	/* Access screen info associated with this pixmap */
+-	ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmap->drawable.pScreen);
+ 
+ 	/* Access driver specific data associated with the screen. */
+ 	IMXPtr imxPtr = IMXPTR(pScrn);
+@@ -1953,7 +1955,7 @@ IMXEXADoneSolid(
+ 	PixmapPtr pPixmap)
+ {
+ 	/* Access screen info associated with this pixmap */
+-	ScrnInfoPtr pScrn = xf86Screens[pPixmap->drawable.pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmap->drawable.pScreen);
+ 
+ 	/* Access driver specific data associated with the screen. */
+ 	IMXPtr imxPtr = IMXPTR(pScrn);
+@@ -1985,7 +1987,7 @@ IMXEXAPrepareCopy(
+ 		return FALSE;
+ 
+ 	/* Access the screen associated with this pixmap. */
+-	ScrnInfoPtr pScrn = xf86Screens[pPixmapDst->drawable.pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmapDst->drawable.pScreen);
+ 
+ 	/* Access driver specific data associated with the screen. */
+ 	IMXPtr imxPtr = IMXPTR(pScrn);
+@@ -2083,7 +2085,7 @@ IMXEXACopy(
+ 	int width, int height)
+ {
+ 	/* Access screen info associated with dst pixmap */
+-	ScrnInfoPtr pScrn = xf86Screens[pPixmapDst->drawable.pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmapDst->drawable.pScreen);
+ 
+ 	/* Access driver specific data associated with the screen. */
+ 	IMXPtr imxPtr = IMXPTR(pScrn);
+@@ -2143,7 +2145,7 @@ IMXEXADoneCopy(
+ 	PixmapPtr pPixmapDst)
+ {
+ 	/* Access screen info associated with this pixmap */
+-	ScrnInfoPtr pScrn = xf86Screens[pPixmapDst->drawable.pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmapDst->drawable.pScreen);
+ 
+ 	/* Access driver specific data associated with the screen. */
+ 	IMXPtr imxPtr = IMXPTR(pScrn);
+@@ -2176,7 +2178,7 @@ IMXEXAUploadToScreen(
+ 		return FALSE;
+ 
+ 	/* Access screen info associated with this pixmap */
+-	ScrnInfoPtr pScrn = xf86Screens[pPixmapDst->drawable.pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmapDst->drawable.pScreen);
+ 
+ 	if (0 >= width || 0 >= height || 0 > dstX || 0 > dstY) {
+ 
+@@ -2268,7 +2270,7 @@ IMXEXADownloadFromScreen(
+ 		return FALSE;
+ 
+ 	/* Access screen info associated with this pixmap */
+-	ScrnInfoPtr pScrn = xf86Screens[pPixmapSrc->drawable.pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmapSrc->drawable.pScreen);
+ 
+ 	if (0 >= width || 0 >= height || 0 > srcX || 0 > srcY) {
+ 
+@@ -2352,7 +2354,7 @@ IMXEXAWaitMarker(
+ 	int marker)
+ {
+ 	/* Access screen info associated with this screen. */
+-	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
+ 
+ 	/* Access driver specific data associated with the screen. */
+ 	IMXPtr imxPtr = IMXPTR(pScrn);
+@@ -2411,7 +2413,7 @@ IMXEXACheckComposite(
+ 		return FALSE;
+ 
+ 	/* Access screen associated with dst pixmap. */
+-	ScrnInfoPtr pScrn = xf86Screens[pPixmapDst->drawable.pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmapDst->drawable.pScreen);
+ 
+ 	/* Access driver specific data associated with the screen. */
+ 	IMXPtr imxPtr = IMXPTR(pScrn);
+@@ -2679,7 +2681,7 @@ IMXEXAPrepareComposite(
+ 	PixmapPtr pPixmapDst)
+ {
+ 	/* Access the screen associated with this pixmap. */
+-	ScrnInfoPtr pScrn = xf86Screens[pPixmapDst->drawable.pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmapDst->drawable.pScreen);
+ 
+ 	/* Access driver specific data associated with the screen. */
+ 	IMXPtr imxPtr = IMXPTR(pScrn);
+@@ -2825,7 +2827,7 @@ IMXEXAComposite(
+ 	int height)
+ {
+ 	/* Access screen info associated with dst pixmap */
+-	ScrnInfoPtr pScrn = xf86Screens[pPixmapDst->drawable.pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmapDst->drawable.pScreen);
+ 
+ 	/* Access driver specific data associated with the screen. */
+ 	IMXPtr imxPtr = IMXPTR(pScrn);
+@@ -2906,7 +2908,7 @@ IMXEXADoneComposite(
+ 	PixmapPtr pPixmapDst)
+ {
+ 	/* Access screen info associated with this pixmap */
+-	ScrnInfoPtr pScrn = xf86Screens[pPixmapDst->drawable.pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pPixmapDst->drawable.pScreen);
+ 
+ 	/* Access driver specific data associated with the screen. */
+ 	IMXPtr imxPtr = IMXPTR(pScrn);
+@@ -2949,7 +2951,7 @@ Bool
+ IMX_EXA_ScreenInit(int scrnIndex, ScreenPtr pScreen)
+ {
+ 	/* Access screen info associated with this screen. */
+-	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
+ 
+ 	/* Access driver specific data associated with the screen. */
+ 	IMXPtr imxPtr = IMXPTR(pScrn);
+@@ -3066,7 +3068,7 @@ Bool
+ IMX_EXA_CloseScreen(int scrnIndex, ScreenPtr pScreen)
+ {
+ 	/* Access screen info associated with this screen. */
+-	ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
++	ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
+ 
+ 	/* Access driver specific data associated with the screen. */
+ 	IMXPtr imxPtr = IMXPTR(pScrn);
+diff -pruN xorg-video-imxng.orig/src/imx_xv_c2d.c xorg-video-imxng/src/imx_xv_c2d.c
+--- xorg-video-imxng.orig/src/imx_xv_c2d.c	2013-02-13 00:31:37.858284376 +0100
++++ xorg-video-imxng/src/imx_xv_c2d.c	2013-02-14 19:54:53.408267627 +0100
+@@ -1169,7 +1169,7 @@ IMXXVInitAdaptorC2D(
+ 		imxxv_fill_surface(imxexaPtr->gpuContext, imxexaPtr->doubleSurf, 0U);
+ 
+ 	/* This early during driver init ScrnInfoPtr does not have a valid ScreenPtr yet. */
+-	ScreenPtr pScreen = screenInfo.screens[pScrn->scrnIndex];
++	ScreenPtr pScreen = xf86ScrnToScreen(pScrn);
+ 
+ 	XF86VideoAdaptorPtr *ppAdaptor = NULL;
+ 	const int nAdaptor = imxxv_init_adaptor(pScreen, pScrn, &ppAdaptor);
