@@ -8,7 +8,7 @@
 name=xorg-video-imxng
 version=20121005
 release=1
-source=(http://crux-arm.nu/files/distfiles/efikamx/$name.tar.xz
+source=(http://crux-arm.nu/files/distfiles/efikamx/$name-$version.tar.xz
         xorg-video-imxng_imx_drv_compat.patch)
 
 build() {
