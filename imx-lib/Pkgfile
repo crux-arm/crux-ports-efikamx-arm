@@ -7,11 +7,17 @@
 
 name=imx-lib
 version=20130214
-release=1
+release=2
 source=(http://crux-arm.nu/files/distfiles/efikamx/$name-$version.tar.xz)
 
 build() {
   cd $name
-  make -j1 PLATFORM=IMX51 INCLUDE="-I/usr/src/linux-`uname -r`/include"
+
+  make -j1 \
+    PLATFORM=IMX51 \
+    INCLUDE="-I/usr/src/linux/include -I/usr/src/linux-`uname -r`/include" \
+    LIB_VERSION_MAJOR="2" \
+    LIB_VERSION_MINOR="0"
+
   make DESTDIR=$PKG PLATFORM=IMX51 install
 }
