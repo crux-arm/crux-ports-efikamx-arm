@@ -6,14 +6,18 @@
 # Depends on: 
 
 name=imx-lib
-version=20111109
+version=20130610
 release=1
-source=(http://crux-arm.nu/files/distfiles/efikamx/$name-$version.tar.bz2
+source=(http://crux-arm.nu/files/distfiles/efikamx/$name-$version.tar.xz
         $name-flags.patch)
 
 build() {
-  cd $name
+  cd $name-$version
   patch -p1 -i $SRC/$name-flags.patch
-  make -j1 PLATFORM=IMX51 INCLUDE="-I/usr/src/linux-`uname -r`/include" LIB_VERSION_MAJOR="2" LIB_VERSION_MINOR="0"
+  make -j1 \
+    PLATFORM=IMX51 \
+    INCLUDE="-I/usr/src/linux/include -I/usr/src/linux-`uname -r`/include" \
+    LIB_VERSION_MAJOR="2" \
+    LIB_VERSION_MINOR="0"
   make DESTDIR=$PKG PLATFORM=IMX51 install
 }
