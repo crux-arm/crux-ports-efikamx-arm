@@ -5,8 +5,8 @@
 # Arch Maintainer: CRUX-ARM System Team, devel at crux-arm dot nu
 # Depends on: c2d c2d-z160 libkgsl imx-lib imx-firmware 
 
-name=xorg-xf86-video-imxng
-version=20121005
+name=xorg-video-imxng
+version=20130610
 release=1
 source=(http://crux-arm.nu/files/distfiles/efikamx/$name-$version.tar.xz
         xorg-video-imxng_imx_drv_compat.patch)
