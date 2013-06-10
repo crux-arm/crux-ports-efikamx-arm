@@ -1,0 +1,48 @@
+diff -pruN imx-lib.orig/ipu/Makefile imx-lib/ipu/Makefile
+--- imx-lib.orig/ipu/Makefile	2013-02-12 14:38:42.058281374 +0100
++++ imx-lib/ipu/Makefile	2013-02-12 15:12:08.418266876 +0100
+@@ -32,7 +32,7 @@ $(LIB_SONAME_FULL): $(OBJS)
+ ifeq "$(PLATFORM)" ""
+ 	$(error "Unspecified PLATFORM variable")
+ endif
+-	$(CC) -D$(PLATFORM) $(INCLUDE) -Wall -O2 -fPIC -c $^ -o $@
++	$(CC) -D$(PLATFORM) $(INCLUDE) -Wall $(CFLAGS) -fPIC -c $^ -o $@
+ 
+ .PHONY: clean
+ clean:
+diff -pruN imx-lib.orig/sahara2/Makefile imx-lib/sahara2/Makefile
+--- imx-lib.orig/sahara2/Makefile	2013-02-12 14:38:42.068285374 +0100
++++ imx-lib/sahara2/Makefile	2013-02-12 14:40:51.308266628 +0100
+@@ -53,7 +53,7 @@ $(LIBNAME).a: $(OBJS)
+ 	$(AR) -rc $@ $^
+ 
+ $(LIB_SONAME_FULL): $(OBJS)
+-	$(CC) -shared -nostartfiles -Wl,-soname,$@ -o $@ $^
++	$(CC) $(CFLAGS) $(INC) -shared -nostartfiles -Wl,-soname,$@ -o $@ $^
+ 	ln -s $(LIB_SONAME_FULL) $(LIB_SONAME).$(LIB_VERSION_MAJOR)
+ 	ln -s $(LIB_SONAME_FULL) $(LIB_SONAME)
+ 
+diff -pruN imx-lib.orig/screenlayer/Makefile imx-lib/screenlayer/Makefile
+--- imx-lib.orig/screenlayer/Makefile	2013-02-12 14:38:42.078285500 +0100
++++ imx-lib/screenlayer/Makefile	2013-02-12 15:14:17.628266623 +0100
+@@ -33,7 +33,7 @@ $(LIB_SONAME_FULL): $(OBJS)
+ ifeq "$(PLATFORM)" ""
+         $(error "Unspecified PLATFORM variable")
+ endif
+-	$(CC) -D$(PLATFORM) $(INC) -Wall -O2 -fPIC -c $^ -o $@
++	$(CC) -D$(PLATFORM) $(INC) -Wall $(CFLAGS) -O2 -fPIC -c $^ -o $@
+ 
+ .PHONY: clean
+ clean:
+diff -pruN imx-lib.orig/vpu/Makefile imx-lib/vpu/Makefile
+--- imx-lib.orig/vpu/Makefile	2013-02-12 14:38:42.058281374 +0100
++++ imx-lib/vpu/Makefile	2013-02-12 15:11:42.348266502 +0100
+@@ -43,7 +43,7 @@ all install :
+ endif
+ 
+ %.o: %.c
+-	$(CC) -D$(PLATFORM) -Wall -O2 -fPIC -c $^ -o $@
++	$(CC) -D$(PLATFORM) -Wall $(CFLAGS) -fPIC -c $^ -o $@
+ 
+ $(LIB_SONAME_FULL): $(OBJ)
+ 	$(CC) -shared -nostartfiles -Wl,-soname,$@ $^ -o $@
