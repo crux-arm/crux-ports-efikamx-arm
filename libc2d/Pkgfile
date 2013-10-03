@@ -5,13 +5,13 @@
 # Arch Maintainer: CRUX-ARM System Team, devel at crux-arm dot nu
 # Depends on: 
 
-name=c2d
-version=2.0.1-20111021
+name=libc2d
+version=2.1.1-20120425
 release=1
-source=(libc2d-imx-dev_2.0.1-20111021_armhf.deb)
+source=($name-imx-dev_${version}_armhf.deb)
 
 build() {
-  ar x $SRC/libc2d-imx-dev_2.0.1-20111021_armhf.deb
+  ar x $SRC/$name-imx-dev_${version}_armhf.deb
   tar xvfz data.tar.gz
   install -d $PKG/usr/include/C2D/
   install -m 0644 usr/include/C2D/c2d_api.h $PKG/usr/include/C2D/
