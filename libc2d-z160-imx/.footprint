@@ -2,4 +2,4 @@ drwxr-xr-x	root/root	usr/
 drwxr-xr-x	root/root	usr/lib/
 lrwxrwxrwx	root/root	usr/lib/libc2d_z160.so -> /usr/lib/libc2d_z160.so.1.0
 lrwxrwxrwx	root/root	usr/lib/libc2d_z160.so.1 -> /usr/lib/libc2d_z160.so.1.0
--rw-r--r--	root/root	usr/lib/libc2d_z160.so.1.0
+-rwxr-xr-x	root/root	usr/lib/libc2d_z160.so.1.0
