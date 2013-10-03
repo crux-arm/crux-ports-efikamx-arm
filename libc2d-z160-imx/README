@@ -1,9 +1,9 @@
 
 
-README for c2d-z160
+README for libc2d-z160-imx
 
 You'll need to download Debian's hf package from:
-http://one.rootspirit.com/pool/main/i/imx-graphics/libc2d-z160-imx_2.0.1-20111021_armhf.deb
+http://armhf.powerdeveloper.org/pool/main/i/imx-graphics/libc2d-z160-imx_2.1.1-20120425_armhf.deb
 and put it in the port's tree current port directory if you agree with Freescale's
 License (http://www.freescale.com/) shown below: 
 
