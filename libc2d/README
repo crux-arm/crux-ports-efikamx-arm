@@ -1,9 +1,9 @@
 
 
-README for c2d
+README for libc2d
 
 You'll need to download Debian's hf package from:
-http://one.rootspirit.com/pool/main/i/imx-graphics/libc2d-imx-dev_2.0.1-20111021_armhf.deb
+http://armhf.powerdeveloper.org/pool/main/i/imx-graphics/libc2d-imx-dev_2.1.1-20120425_armhf.deb
 and put it in the port's tree current port directory if you agree with Freescale's
 License (http://www.freescale.com/) shown below: 
 
