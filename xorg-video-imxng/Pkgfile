@@ -3,18 +3,18 @@
 # Packager: CRUX-ARM System Team, devel at crux-arm dot nu
 # Maintainer: CRUX-ARM System Team, devel at crux-arm dot nu
 # Arch Maintainer: CRUX-ARM System Team, devel at crux-arm dot nu
-# Depends on: c2d c2d-z160 libkgsl imx-lib imx-firmware 
+# Depends on: libc2d libc2d-z160-imx libkgsl-imx imx-lib imx-firmware 
 
 name=xorg-video-imxng
 version=20130610
 release=1
 source=(http://crux-arm.nu/files/distfiles/efikamx/$name-$version.tar.xz
-        xorg-video-imxng_imx_drv_compat.patch)
+        ${name}_3.0.patch)
 
 build() {
   export CFLAGS="$CFLAGS -I/usr/include -I/usr/src/linux-`uname -r`/include"
   cd xorg-video-imxng
-  patch -p1 -i $SRC/xorg-video-imxng_imx_drv_compat.patch
+  patch -p1 -i $SRC/${name}_3.0.patch
   chmod u+x autogen.sh
   ./autogen.sh --prefix=/usr
   make
