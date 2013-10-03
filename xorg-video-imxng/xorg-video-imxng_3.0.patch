@@ -1,7 +1,6 @@
-Binary files xorg-video-imxng.orig/.git/index and xorg-video-imxng/.git/index differ
-diff -pruN xorg-video-imxng.orig/src/compat-api.h xorg-video-imxng/src/compat-api.h
---- xorg-video-imxng.orig/src/compat-api.h	1970-01-01 01:00:00.000000000 +0100
-+++ xorg-video-imxng/src/compat-api.h	2013-02-13 01:18:02.808280498 +0100
+diff -pruN xorg-video-imxng/src/compat-api.h xorg-video-imxng_new/src/compat-api.h
+--- xorg-video-imxng/src/compat-api.h	1970-01-01 01:00:00.000000000 +0100
++++ xorg-video-imxng_new/src/compat-api.h	2013-06-11 10:11:27.809310053 +0200
 @@ -0,0 +1,106 @@
 +/*
 + * Copyright 2012 Red Hat, Inc.
@@ -109,10 +108,18 @@ diff -pruN xorg-video-imxng.orig/src/compat-api.h xorg-video-imxng/src/compat-ap
 +#endif
 +
 +#endif
-diff -pruN xorg-video-imxng.orig/src/imx_drv.c xorg-video-imxng/src/imx_drv.c
---- xorg-video-imxng.orig/src/imx_drv.c	2013-02-13 00:31:37.858284376 +0100
-+++ xorg-video-imxng/src/imx_drv.c	2013-02-14 20:37:53.418271127 +0100
-@@ -64,6 +64,8 @@
+diff -pruN xorg-video-imxng/src/imx_drv.c xorg-video-imxng_new/src/imx_drv.c
+--- xorg-video-imxng/src/imx_drv.c	2013-06-10 13:39:42.000000000 +0200
++++ xorg-video-imxng_new/src/imx_drv.c	2013-06-11 10:20:55.599296173 +0200
+@@ -44,7 +44,6 @@
+ #include "xf86_OSproc.h"
+ 
+ #include "mipointer.h"
+-#include "mibstore.h"
+ #include "micmap.h"
+ #include "colormapst.h"
+ #include "xf86cmap.h"
+@@ -64,6 +63,8 @@
  
  #include "xf86xv.h"
  
@@ -121,7 +128,7 @@ diff -pruN xorg-video-imxng.orig/src/imx_drv.c xorg-video-imxng/src/imx_drv.c
  static Bool debug = 0;
  
  #define TRACE_ENTER(str) \
-@@ -80,8 +82,8 @@ static const OptionInfoRec * IMXAvailabl
+@@ -80,8 +81,8 @@ static const OptionInfoRec * IMXAvailabl
  static void	IMXIdentify(int flags);
  static Bool	IMXProbe(DriverPtr drv, int flags);
  static Bool	IMXPreInit(ScrnInfoPtr pScrn, int flags);
@@ -132,7 +139,7 @@ diff -pruN xorg-video-imxng.orig/src/imx_drv.c xorg-video-imxng/src/imx_drv.c
  static Bool	IMXDriverFunc(ScrnInfoPtr pScrn, xorgDriverFuncOp op, pointer ptr);
  
  /* for XV acceleration */
-@@ -520,9 +522,9 @@ IMXPreInit(ScrnInfoPtr pScrn, int flags)
+@@ -520,9 +521,9 @@ IMXPreInit(ScrnInfoPtr pScrn, int flags)
  }
  
  static Bool
@@ -144,7 +151,7 @@ diff -pruN xorg-video-imxng.orig/src/imx_drv.c xorg-video-imxng/src/imx_drv.c
  	IMXPtr fPtr = IMXPTR(pScrn);
  	VisualPtr visual;
  	int init_picture = 0;
-@@ -540,28 +542,27 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
+@@ -540,28 +541,27 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
  	       pScrn->mask.red,pScrn->mask.green,pScrn->mask.blue,
  	       pScrn->offset.red,pScrn->offset.green,pScrn->offset.blue);
  #endif
@@ -179,7 +186,7 @@ diff -pruN xorg-video-imxng.orig/src/imx_drv.c xorg-video-imxng/src/imx_drv.c
  				   " for %d bits per pixel [1]\n",
  				   pScrn->bitsPerPixel);
  			return FALSE;
-@@ -570,14 +571,14 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
+@@ -570,14 +570,14 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
  		if (!miSetVisualTypes(pScrn->depth,
  				      miGetDefaultVisualMask(pScrn->depth),
  				      pScrn->rgbBits, pScrn->defaultVisual)) {
@@ -196,7 +203,7 @@ diff -pruN xorg-video-imxng.orig/src/imx_drv.c xorg-video-imxng/src/imx_drv.c
  	  return FALSE;
  	}
  
-@@ -587,7 +588,7 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
+@@ -587,7 +587,7 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
  		(pScrn->bitsPerPixel / 8);
  
  	if (pScrn->displayWidth != pScrn->virtualX) {
@@ -205,7 +212,7 @@ diff -pruN xorg-video-imxng.orig/src/imx_drv.c xorg-video-imxng/src/imx_drv.c
  			"Pitch updated to %d after ModeInit\n",
  			pScrn->displayWidth);
  	}
-@@ -610,7 +611,7 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
+@@ -610,7 +610,7 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
  			init_picture = 1;
  			break;
  	 	default:
@@ -214,7 +221,7 @@ diff -pruN xorg-video-imxng.orig/src/imx_drv.c xorg-video-imxng/src/imx_drv.c
  				   "internal error: invalid number of bits per"
  				   " pixel (%d) encountered in"
  				   " IMXScreenInit()\n", pScrn->bitsPerPixel);
-@@ -621,7 +622,7 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
+@@ -621,7 +621,7 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
  	case FBDEVHW_INTERLEAVED_PLANES:
  		/* This should never happen ...
  		* we should check for this much much earlier ... */
@@ -223,7 +230,7 @@ diff -pruN xorg-video-imxng.orig/src/imx_drv.c xorg-video-imxng/src/imx_drv.c
  		           "internal error: interleaved planes are not yet "
  			   "supported by the imx driver\n");
  		ret = FALSE;
-@@ -629,20 +630,20 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
+@@ -629,20 +629,20 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
  	case FBDEVHW_TEXT:
  		/* This should never happen ...
  		* we should check for this much much earlier ... */
@@ -247,7 +254,7 @@ diff -pruN xorg-video-imxng.orig/src/imx_drv.c xorg-video-imxng/src/imx_drv.c
  		           "internal error: unrecognised hardware type (%d) "
  			   "encountered in IMXScreenInit()\n", type);
  		ret = FALSE;
-@@ -674,9 +675,9 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
+@@ -674,9 +674,9 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
  	xf86SetBlackWhitePixels(pScreen);
  
  	/* INITIALIZE ACCELERATION BEFORE INIT FOR BACKING STORE AND SOFTWARE CURSOR */ 
@@ -259,7 +266,15 @@ diff -pruN xorg-video-imxng.orig/src/imx_drv.c xorg-video-imxng/src/imx_drv.c
  		       "IMX EXA failed to initialize screen.\n");
  	    return FALSE;
  	}
-@@ -708,29 +709,29 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
+@@ -696,7 +696,6 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
+ 
+ 		xf86DrvMsg(pScrn->scrnIndex, X_INFO, "IMX EXA acceleration setup failed - no acceleration in use\n");
+ 	}
+-	miInitializeBackingStore(pScreen);
+ 	xf86SetBackingStore(pScreen);
+ 
+ 	/* software cursor */
+@@ -708,29 +707,29 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
  	/* XXX It would be simpler to use miCreateDefColormap() in all cases. */
  	case FBDEVHW_PACKED_PIXELS:
  		if (!miCreateDefColormap(pScreen)) {
@@ -294,7 +309,7 @@ diff -pruN xorg-video-imxng.orig/src/imx_drv.c xorg-video-imxng/src/imx_drv.c
  		           "internal error: unrecognised imx hardware type "
  			   "(%d) encountered in IMXScreenInit()\n", type);
  		return FALSE;
-@@ -762,13 +763,12 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
+@@ -762,13 +761,12 @@ IMXScreenInit(int scrnIndex, ScreenPtr p
  }
  
  static Bool
@@ -311,7 +326,7 @@ diff -pruN xorg-video-imxng.orig/src/imx_drv.c xorg-video-imxng/src/imx_drv.c
  	fbdevHWRestore(pScrn);
  	fbdevHWUnmapVidmem(pScrn);
  	pScrn->vtSema = FALSE;
-@@ -777,7 +777,7 @@ IMXCloseScreen(int scrnIndex, ScreenPtr
+@@ -777,7 +775,7 @@ IMXCloseScreen(int scrnIndex, ScreenPtr
  
  	IMXFreeRec(pScrn);
  
@@ -320,7 +335,7 @@ diff -pruN xorg-video-imxng.orig/src/imx_drv.c xorg-video-imxng/src/imx_drv.c
  }
  
  Bool
-@@ -796,7 +796,7 @@ IMXGetPixmapProperties(
+@@ -796,7 +794,7 @@ IMXGetPixmapProperties(
  	}
  
  	/* Access screen associated with this pixmap. */
@@ -329,9 +344,9 @@ diff -pruN xorg-video-imxng.orig/src/imx_drv.c xorg-video-imxng/src/imx_drv.c
  
  	/* Check if the screen associated with this pixmap has IMX driver. */
  	if (0 != strcmp(IMX_DRIVER_NAME, pScrn->driverName)) {
-diff -pruN xorg-video-imxng.orig/src/imx_exa_c2d.c xorg-video-imxng/src/imx_exa_c2d.c
---- xorg-video-imxng.orig/src/imx_exa_c2d.c	2013-02-13 00:31:37.868285501 +0100
-+++ xorg-video-imxng/src/imx_exa_c2d.c	2013-02-14 18:29:47.368267874 +0100
+diff -pruN xorg-video-imxng/src/imx_exa_c2d.c xorg-video-imxng_new/src/imx_exa_c2d.c
+--- xorg-video-imxng/src/imx_exa_c2d.c	2013-06-10 13:39:42.000000000 +0200
++++ xorg-video-imxng_new/src/imx_exa_c2d.c	2013-06-11 10:11:27.819311929 +0200
 @@ -45,6 +45,8 @@
  
  #include "imx_type.h"
@@ -530,9 +545,9 @@ diff -pruN xorg-video-imxng.orig/src/imx_exa_c2d.c xorg-video-imxng/src/imx_exa_
  
  	/* Access driver specific data associated with the screen. */
  	IMXPtr imxPtr = IMXPTR(pScrn);
-diff -pruN xorg-video-imxng.orig/src/imx_xv_c2d.c xorg-video-imxng/src/imx_xv_c2d.c
---- xorg-video-imxng.orig/src/imx_xv_c2d.c	2013-02-13 00:31:37.858284376 +0100
-+++ xorg-video-imxng/src/imx_xv_c2d.c	2013-02-14 19:54:53.408267627 +0100
+diff -pruN xorg-video-imxng/src/imx_xv_c2d.c xorg-video-imxng_new/src/imx_xv_c2d.c
+--- xorg-video-imxng/src/imx_xv_c2d.c	2013-06-10 13:39:42.000000000 +0200
++++ xorg-video-imxng_new/src/imx_xv_c2d.c	2013-06-11 10:11:27.829310804 +0200
 @@ -1169,7 +1169,7 @@ IMXXVInitAdaptorC2D(
  		imxxv_fill_surface(imxexaPtr->gpuContext, imxexaPtr->doubleSurf, 0U);
  
