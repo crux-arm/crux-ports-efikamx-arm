@@ -1,0 +1,4 @@
+
+README for imx-lib
+
+Kernel sources should be in /usr/src to build the port named linux-'uname -r'
