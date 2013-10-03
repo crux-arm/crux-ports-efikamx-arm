@@ -5,14 +5,14 @@
 # Arch Maintainer: CRUX-ARM System Team, devel at crux-arm dot nu
 # Depends on: 
 
-name=libkgsl
-version=2.0.1-20111021
+name=libkgsl-imx
+version=2.1.1-20120425
 release=1
-source=(libkgsl-imx_2.0.1-20111021_armhf.deb)
+source=(${name}_${version}_armhf.deb)
 
 build() {
-  ar x libkgsl-imx_2.0.1-20111021_armhf.deb
+  ar x ${name}_${version}_armhf.deb
   tar xvfz data.tar.gz
   install -d $PKG/usr/lib/
-  cp usr/lib/libkgsl.so.1.0 $PKG/usr/lib
+  install -m 755 usr/lib/arm-linux-gnueabihf/libkgsl.so.1.0 $PKG/usr/lib
 }
