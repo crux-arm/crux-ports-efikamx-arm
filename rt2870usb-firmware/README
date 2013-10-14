@@ -1,0 +1,10 @@
+README for rt3070-firmware
+
+REQUIREMENTS
+
+   Download the Firmware for RaLink RT28XX/RT30XX USB series
+   (RT2870/RT2770/RT3572/RT3070) WiFi adapter
+   - http://www.mediatek.com/_en/07_downloads/01-1_windowsDetail.php?sn=5030
+   and put the file
+   - RT2870_Firmware_V22.zip
+   into the directory defined by PKGMK_SOURCE_DIR. See pkgmk.conf(5).
