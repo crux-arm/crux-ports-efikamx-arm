@@ -1,5 +1,5 @@
 # Description: Firmware for RaLink RT28XX/RT30XX USB series (RT2870/RT2770/RT3572/RT3070) WiFi adapter
-# URL: http://www.mediatek.com/_en/07_downloads/01_windows.php?sn=501
+# URL: http://www.mediatek.com/en/downloads/firmware-rt28xxrt30xx-usb-series-rt2870rt2770rt3572rt3070/
 # Arch Maintainer: CRUX-ARM System Team, devel at crux-arm dot nu
 # Maintainer: CRUX-ARM System Team, devel at crux-arm dot nu
 # Packager: CRUX-ARM System Team, devel at crux-arm dot nu
@@ -15,4 +15,3 @@ build() {
   ln -s rt2870.bin $PKG/lib/firmware/rt3070.bin
   ln -s rt2870.bin $PKG/lib/firmware/rt3071.bin
 }
-
