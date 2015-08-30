@@ -1,0 +1,9 @@
+For html5 video and h.264 support you will need to install the additional ports:
+
+gst-plugins-good
+gst-libav
+
+Depending on what version of firefox in use, you may also need to play around
+with the about:config options:
+
+media.mediasource.*
