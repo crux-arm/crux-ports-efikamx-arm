@@ -5,16 +5,15 @@
 # Depends on: nss, libidl, gtk, python, alsa-lib, xorg-libxt, yasm, mesa3d, gst-plugins-base
 
 name=firefox
-version=40.0
+version=40.0.3
 release=1
 source=(http://ftp.mozilla.org/pub/firefox/releases/$version/source/firefox-$version.source.tar.bz2
-        firefox-install-dir.patch 0001-Fix-build-with-USE_SKIA_GPU.patch firefox.desktop)
+        firefox-install-dir.patch firefox.desktop)
 
 build() {
   cd mozilla-release
 
   patch -p1 -i $SRC/firefox-install-dir.patch
-  patch -p1 -i $SRC/0001-Fix-build-with-USE_SKIA_GPU.patch
 
   cat <<- EOF > .mozconfig
   mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/firefox-shared
@@ -29,7 +28,7 @@ build() {
   ac_add_options --enable-system-ffi
   ac_add_options --enable-system-pixman
   ac_add_options --enable-system-sqlite
-  ac_add_options --enable-system-cairo
+  #ac_add_options --enable-system-cairo
   ac_add_options --with-pthreads
   ac_add_options --enable-optimize="$CFLAGS"
   ac_add_options --enable-official-branding
