@@ -4,7 +4,7 @@ CRUX-ARM ports overlay for Genesi EfikaMX
 
 To use these ports, download the `efikamx-arm.httpup` file to `/etc/ports`:
 ```
-$ sudo wget -P /etc/ports https://raw.githubusercontent.com/crux-arm/crux-ports-efikamx-arm/main/efikamx-arm.httpup
+$ sudo wget -P /etc/ports https://raw.githubusercontent.com/crux-arm/crux-ports-efikamx-arm/3.1/efikamx-arm.httpup
 $ sudo ports -u efikamx-arm
 ```
 
