@@ -23,7 +23,7 @@ build() {
 
   # config
   install -d -m 0755 $PKG/boot
-  install -m 0644 .config $PKG/boot/config-$version
+  install -m 0644 .config $PKG/boot/config-$version-efikamx
 
   # uImage
   mkimage -A arm -O linux -C none \
@@ -32,11 +32,11 @@ build() {
     -e 0x90008000 \
     -n "CRUX-ARM kernel-efikamx $version" \
     -d arch/arm/boot/zImage \
-    $PKG/boot/uImage-$version
+    $PKG/boot/uImage-$version-efikamx
 
   # modules and firmware
   make modules
   install -d -m 0755 $PKG/lib/{firmware,modules}
   make modules_install INSTALL_MOD_PATH=$PKG
-  rm -f $PKG/lib/modules/$version/{source,build}
+  rm -f $PKG/lib/modules/*/{source,build}
 }
