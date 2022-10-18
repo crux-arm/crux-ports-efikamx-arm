@@ -1,0 +1,25 @@
+# Description: U-Boot tools
+# URL: http://www.denx.de/wiki/U-Boot/WebHome
+# Maintainer: CRUX-ARM System Team, devel at crux-arm dot nu
+# Depends on:
+
+name=u-boot-tools
+version=2015.07
+release=1
+source=(ftp://ftp.denx.de/pub/u-boot/u-boot-$version.tar.bz2)
+
+build() {
+  cd u-boot-$version
+
+  # use custom compiler flags
+  sed -e "/^HOSTCFLAGS/ s/-O2/\$(CUSTOMCFLAGS)/" -i Makefile
+
+  make mx51_efikamx_defconfig
+  make tools CUSTOMCFLAGS="$CFLAGS" TOOLSUBDIRS=""
+  make env
+
+  install -d -m 0755 $PKG/usr/{bin,man/man1}
+  install -m 0755 tools/{{dump,mk,mkenv}image,env/fw_printenv} $PKG/usr/bin
+  ln -sf fw_printenv $PKG/usr/bin/fw_setenv
+  install -m 0644 doc/mkimage.1 $PKG/usr/man/man1
+} 
