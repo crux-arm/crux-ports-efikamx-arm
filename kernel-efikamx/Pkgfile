@@ -1,0 +1,42 @@
+# Description: Linux Kernel binaries for EfikaMX
+# URL: https://github.com/genesi/linux-legacy
+# Maintainer: CRUX-ARM System Team, devel at crux-arm dot nu
+# Depends on: u-boot-tools
+
+name=kernel-efikamx
+version=2.6.31
+release=1
+
+source=(https://github.com/genesi/linux-legacy/archive/refs/heads/master.zip \
+  config-$version)
+
+build() {
+  cd linux-legacy-master
+
+  # use short version number (e.g 2.6.31)
+  sed 's/EXTRAVERSION =.*/EXTRAVERSION =/' -i Makefile
+
+  # zImage
+  make mrproper
+  cp $SRC/config-$version .config
+  make zImage
+
+  # config
+  install -d -m 0755 $PKG/boot
+  install -m 0644 .config $PKG/boot/config-$version
+
+  # uImage
+  mkimage -A arm -O linux -C none \
+    -T kernel \
+    -a 0x90008000 \
+    -e 0x90008000 \
+    -n "CRUX-ARM kernel-efikamx $version" \
+    -d arch/arm/boot/zImage \
+    $PKG/boot/uImage-$version
+
+  # modules and firmware
+  make modules
+  install -d -m 0755 $PKG/lib/{firmware,modules}
+  make modules_install INSTALL_MOD_PATH=$PKG
+  rm -f $PKG/lib/modules/$version/{source,build}
+}
