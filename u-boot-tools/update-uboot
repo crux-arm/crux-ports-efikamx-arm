@@ -1,0 +1,27 @@
+#!/bin/bash
+#
+# update-uboot is a stub for running mkimage to re-generate boot.scr
+
+BASE_DIR=${1:-$(pwd)}
+UBOOT_MKIMAGE=$(mkimage -V)
+UBOOT_VERSION=${UBOOT_MKIMAGE/*version /}
+UBOOT_SCRIPT=$BASE_DIR/boot.script
+UBOOT_SCR=$BASE_DIR/boot.scr
+
+if [ ! -f $UBOOT_SCRIPT ]; then
+  echo "ERROR: File not found '$UBOOT_SCRIPT'"
+  exit 1
+fi
+
+echo "You are about to generate a new image for U-Boot:"
+echo "$UBOOT_SCR"
+echo
+read -p "Continue? [y|N] " ans
+[ "$ans" != "y" ] && exit 0
+
+mkimage -A arm -O linux -C none \
+  -a 0 -e 0 \
+  -T script \
+  -n "CRUX-ARM u-boot-tools $UBOOT_VERSION" \
+  -d $UBOOT_SCRIPT \
+  $UBOOT_SCR

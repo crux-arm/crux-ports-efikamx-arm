@@ -1,3 +1,5 @@
+drwxr-xr-x	root/root	boot/
+-rw-r--r--	root/root	boot/boot.script
 drwxr-xr-x	root/root	usr/
 drwxr-xr-x	root/root	usr/bin/
 -rwxr-xr-x	root/root	usr/bin/dumpimage
@@ -5,6 +7,7 @@ drwxr-xr-x	root/root	usr/bin/
 lrwxrwxrwx	root/root	usr/bin/fw_setenv -> fw_printenv
 -rwxr-xr-x	root/root	usr/bin/mkenvimage
 -rwxr-xr-x	root/root	usr/bin/mkimage
+-rwxr-xr-x	root/root	usr/bin/update-uboot
 drwxr-xr-x	root/root	usr/man/
 drwxr-xr-x	root/root	usr/man/man1/
 -rw-r--r--	root/root	usr/man/man1/mkimage.1.gz
