@@ -1,0 +1,25 @@
+# Description: C library for multiple-precision floating-point computations with correct rounding
+# URL:         http://www.mpfr.org/
+# Maintainer:  CRUX System Team, core-ports at crux dot nu
+# Depends on:  gcc48-libgmp
+
+name=gcc48-libmpfr
+version=3.1.5-p2
+release=1
+source=(http://www.mpfr.org/mpfr-${version%-*}/mpfr-${version%-*}.tar.xz
+        libmpfr-$version.patch.gz)
+
+build() {
+  cd mpfr-${version%-*}
+  gunzip -c $SRC/libmpfr-$version.patch.gz | patch -p1
+
+  ./configure \
+    --prefix=/usr/gcc48 \
+    --with-gmp=/usr/gcc48 \
+    --build=arm-unknown-linux-gnueabihf
+
+  make
+  make DESTDIR=$PKG install
+
+  rm -r $PKG/usr/gcc48/share
+}

@@ -1,0 +1,45 @@
+# Description: The GNU Binutils are a collection of binary tools
+# URL: http://sources.redhat.com/binutils/
+# Maintainer: CRUX System Team, core-ports at crux dot nu
+# Arch Maintainer: CRUX-ARM System Team, devel at crux-arm dot nu
+# Depends on: zlib
+
+name=gcc48-binutils
+version=2.24
+release=2
+source=(https://ftp.gnu.org/gnu/binutils/binutils-$version.tar.bz2)
+
+build() {
+  sed -i '/^SUBDIRS/s/doc//' binutils-$version/bfd/Makefile.in
+
+  mkdir build
+  cd build
+
+  export CFLAGS="-O2 -pipe -fcommon -Wno-error \
+-Wno-error=implicit-fallthrough \
+-Wno-error=cast-function-type \
+-Wno-error=stringop-truncation \
+-Wno-error=shift-negative-value \
+-Wno-error=int-in-bool-context \
+-Wno-error=unused-const-variable \
+-Wno-error=dangling-pointer \
+-Wno-error=unused-value \
+-Wno-error=tautological-compare \
+-Wno-error=pointer-compare"
+  export CXXFLAGS="$CXXFLAGS -fpermissive"
+
+  ../binutils-$version/configure \
+    --prefix=/usr/gcc48 \
+    --build=arm-unknown-linux-gnueabihf \
+    --enable-shared \
+    --disable-nls \
+    --disable-werror
+
+  make
+  make DESTDIR=$PKG install
+
+  install -m 0644 ../binutils-$version/include/libiberty.h $PKG/usr/gcc48/include
+  rm -r $PKG/usr/gcc48/share
+  sed -i "s|-L$SRC[^ ]* ||g" $PKG/usr/gcc48/lib/lib{bfd,opcodes}.la
+}
+
