@@ -1,0 +1,1313 @@
+diff -purN u-boot-2017.11.orig/arch/arm/Makefile u-boot-2017.11/arch/arm/Makefile
+--- u-boot-2017.11.orig/arch/arm/Makefile	2017-11-14 01:08:06.000000000 +0000
++++ u-boot-2017.11/arch/arm/Makefile	2026-02-17 23:40:02.227380511 +0000
+@@ -17,7 +17,7 @@ arch-$(CONFIG_CPU_PXA)		=
+ arch-$(CONFIG_CPU_ARM1136)	=-march=armv5
+ arch-$(CONFIG_CPU_ARM1176)	=-march=armv5t
+ arch-$(CONFIG_CPU_V7)		=$(call cc-option, -march=armv7-a, \
+-				 $(call cc-option, -march=armv7, -march=armv5))
++				 $(call cc-option, -march=armv7))
+ arch-$(CONFIG_ARM64)		=-march=armv8-a
+ 
+ # On Tegra systems we must build SPL for the armv4 core on the device
+diff -purN u-boot-2017.11.orig/arch/arm/mach-imx/mx5/Kconfig u-boot-2017.11/arch/arm/mach-imx/mx5/Kconfig
+--- u-boot-2017.11.orig/arch/arm/mach-imx/mx5/Kconfig	2017-11-14 01:08:06.000000000 +0000
++++ u-boot-2017.11/arch/arm/mach-imx/mx5/Kconfig	2026-02-17 23:33:43.884558008 +0000
+@@ -25,6 +25,11 @@ config TARGET_MX51EVK
+ 	select BOARD_LATE_INIT
+ 	select MX51
+ 
++config TARGET_MX51_EFIKAMX
++	bool "Support mx51_efikamx"
++	select BOARD_LATE_INIT
++	select MX51
++
+ config TARGET_MX53ARD
+ 	bool "Support mx53ard"
+ 	select MX53
+@@ -66,6 +71,7 @@ config SYS_SOC
+ source "board/aries/m53evk/Kconfig"
+ source "board/beckhoff/mx53cx9020/Kconfig"
+ source "board/freescale/mx51evk/Kconfig"
++source "board/freescale/mx51_efikamx/Kconfig"
+ source "board/freescale/mx53ard/Kconfig"
+ source "board/freescale/mx53evk/Kconfig"
+ source "board/freescale/mx53loco/Kconfig"
+diff -purN u-boot-2017.11.orig/board/freescale/mx51_efikamx/Kconfig u-boot-2017.11/board/freescale/mx51_efikamx/Kconfig
+--- u-boot-2017.11.orig/board/freescale/mx51_efikamx/Kconfig	1970-01-01 00:00:00.000000000 +0000
++++ u-boot-2017.11/board/freescale/mx51_efikamx/Kconfig	2026-02-17 23:32:44.291004876 +0000
+@@ -0,0 +1,15 @@
++if TARGET_MX51_EFIKAMX
++
++config SYS_BOARD
++	default "mx51_efikamx"
++
++config SYS_VENDOR
++	default "freescale"
++
++config SYS_SOC
++	default "mx5"
++
++config SYS_CONFIG_NAME
++	default "mx51_efikamx"
++
++endif
+diff -purN u-boot-2017.11.orig/board/freescale/mx51_efikamx/MAINTAINERS u-boot-2017.11/board/freescale/mx51_efikamx/MAINTAINERS
+--- u-boot-2017.11.orig/board/freescale/mx51_efikamx/MAINTAINERS	1970-01-01 00:00:00.000000000 +0000
++++ u-boot-2017.11/board/freescale/mx51_efikamx/MAINTAINERS	2015-07-14 17:32:21.000000000 +0000
+@@ -0,0 +1,7 @@
++MX51_EFIKAMX BOARD
++#M:	-
++S:	Maintained
++F:	board/genesi/mx51_efikamx/
++F:	include/configs/mx51_efikamx.h
++F:	configs/mx51_efikamx_defconfig
++F:	configs/mx51_efikasb_defconfig
+diff -purN u-boot-2017.11.orig/board/freescale/mx51_efikamx/Makefile u-boot-2017.11/board/freescale/mx51_efikamx/Makefile
+--- u-boot-2017.11.orig/board/freescale/mx51_efikamx/Makefile	1970-01-01 00:00:00.000000000 +0000
++++ u-boot-2017.11/board/freescale/mx51_efikamx/Makefile	2015-07-14 17:32:21.000000000 +0000
+@@ -0,0 +1,13 @@
++#
++# Copyright (C) 2010, Marek Vasut <marek.vasut@gmail.com>
++#
++# BASED ON: imx51evk
++#
++# Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
++#
++# (C) Copyright 2009 Freescale Semiconductor, Inc.
++#
++# SPDX-License-Identifier:	GPL-2.0+
++#
++
++obj-y	:= efikamx.o efikamx-usb.o
+diff -purN u-boot-2017.11.orig/board/freescale/mx51_efikamx/efikamx-usb.c u-boot-2017.11/board/freescale/mx51_efikamx/efikamx-usb.c
+--- u-boot-2017.11.orig/board/freescale/mx51_efikamx/efikamx-usb.c	1970-01-01 00:00:00.000000000 +0000
++++ u-boot-2017.11/board/freescale/mx51_efikamx/efikamx-usb.c	2015-07-14 17:32:21.000000000 +0000
+@@ -0,0 +1,230 @@
++/*
++ * Copyright (C) 2010 Marek Vasut <marek.vasut@gmail.com>
++ *
++ * (C) Copyright 2009 Freescale Semiconductor, Inc.
++ *
++ * SPDX-License-Identifier:	GPL-2.0+
++ */
++
++#include <common.h>
++#include <usb.h>
++#include <asm/io.h>
++#include <asm/arch/imx-regs.h>
++#include <asm/arch/iomux-mx51.h>
++#include <asm/gpio.h>
++#include <usb/ehci-fsl.h>
++#include <usb/ulpi.h>
++#include <errno.h>
++
++#include "../../../drivers/usb/host/ehci.h"
++
++/*
++ * Configure the USB H1 and USB H2 IOMUX
++ */
++void setup_iomux_usb(void)
++{
++	static const iomux_v3_cfg_t usb_h1_pads[] = {
++		MX51_PAD_USBH1_CLK__USBH1_CLK,
++		MX51_PAD_USBH1_DIR__USBH1_DIR,
++		MX51_PAD_USBH1_STP__USBH1_STP,
++		MX51_PAD_USBH1_NXT__USBH1_NXT,
++		MX51_PAD_USBH1_DATA0__USBH1_DATA0,
++		MX51_PAD_USBH1_DATA1__USBH1_DATA1,
++		MX51_PAD_USBH1_DATA2__USBH1_DATA2,
++		MX51_PAD_USBH1_DATA3__USBH1_DATA3,
++		MX51_PAD_USBH1_DATA4__USBH1_DATA4,
++		MX51_PAD_USBH1_DATA5__USBH1_DATA5,
++		MX51_PAD_USBH1_DATA6__USBH1_DATA6,
++		MX51_PAD_USBH1_DATA7__USBH1_DATA7,
++	};
++
++	static const iomux_v3_cfg_t usb_pads[] = {
++		MX51_PAD_EIM_D27__GPIO2_9, /* USB PHY reset */
++		MX51_PAD_GPIO1_5__GPIO1_5, /* USB HUB reset */
++		NEW_PAD_CTRL(MX51_PAD_EIM_A22__GPIO2_16, 0), /* WIFI /EN */
++		NEW_PAD_CTRL(MX51_PAD_EIM_A16__GPIO2_10, 0), /* WIFI RESET */
++		NEW_PAD_CTRL(MX51_PAD_EIM_A17__GPIO2_11, 0), /* BT /EN */
++	};
++
++	imx_iomux_v3_setup_multiple_pads(usb_h1_pads, ARRAY_SIZE(usb_h1_pads));
++
++	if (machine_is_efikasb()) {
++		static const iomux_v3_cfg_t usb_h2_pads[] = {
++			MX51_PAD_EIM_A24__USBH2_CLK,
++			MX51_PAD_EIM_A25__USBH2_DIR,
++			MX51_PAD_EIM_A26__USBH2_STP,
++			MX51_PAD_EIM_A27__USBH2_NXT,
++			MX51_PAD_EIM_D16__USBH2_DATA0,
++			MX51_PAD_EIM_D17__USBH2_DATA1,
++			MX51_PAD_EIM_D18__USBH2_DATA2,
++			MX51_PAD_EIM_D19__USBH2_DATA3,
++			MX51_PAD_EIM_D20__USBH2_DATA4,
++			MX51_PAD_EIM_D21__USBH2_DATA5,
++			MX51_PAD_EIM_D22__USBH2_DATA6,
++			MX51_PAD_EIM_D23__USBH2_DATA7,
++		};
++
++		imx_iomux_v3_setup_multiple_pads(usb_h2_pads,
++						 ARRAY_SIZE(usb_h2_pads));
++	}
++
++	imx_iomux_v3_setup_multiple_pads(usb_pads, ARRAY_SIZE(usb_pads));
++}
++
++/*
++ * Enable devices connected to USB BUSes
++ */
++static void efika_usb_enable_devices(void)
++{
++	/* Enable Bluetooth */
++	gpio_direction_output(IMX_GPIO_NR(2, 11), 0);
++	udelay(10000);
++	gpio_set_value(IMX_GPIO_NR(2, 11), 1);
++
++	/* Enable WiFi */
++	gpio_direction_output(IMX_GPIO_NR(2, 16), 1);
++	udelay(10000);
++
++	/* Reset the WiFi chip */
++	gpio_direction_output(IMX_GPIO_NR(2, 10), 0);
++	udelay(10000);
++	gpio_set_value(IMX_GPIO_NR(2, 10), 1);
++}
++
++/*
++ * Reset USB HUB (or HUBs on EfikaSB)
++ */
++static void efika_usb_hub_reset(void)
++{
++	/* HUB reset */
++	gpio_direction_output(IMX_GPIO_NR(1, 5), 1);
++	udelay(1000);
++	gpio_set_value(IMX_GPIO_NR(1, 5), 0);
++	udelay(1000);
++	gpio_set_value(IMX_GPIO_NR(1, 5), 1);
++}
++
++/*
++ * Reset USB PHY (or PHYs on EfikaSB)
++ */
++static void efika_usb_phy_reset(void)
++{
++	/* SMSC 3317 PHY reset */
++	gpio_direction_output(IMX_GPIO_NR(2, 9), 0);
++	udelay(1000);
++	gpio_set_value(IMX_GPIO_NR(2, 9), 1);
++}
++
++static void efika_ehci_init(struct usb_ehci *ehci, uint32_t stp_gpio,
++				iomux_v3_cfg_t stp_pad_gpio,
++				iomux_v3_cfg_t stp_pad_usb)
++{
++	int ret;
++	struct ulpi_regs *ulpi = (struct ulpi_regs *)0;
++	struct ulpi_viewport ulpi_vp;
++
++	imx_iomux_v3_setup_pad(stp_pad_gpio);
++	gpio_direction_output(stp_gpio, 0);
++	udelay(1000);
++	gpio_set_value(stp_gpio, 1);
++	udelay(1000);
++
++	imx_iomux_v3_setup_pad(stp_pad_usb);
++	udelay(10000);
++
++	ulpi_vp.viewport_addr = (u32)&ehci->ulpi_viewpoint;
++	ulpi_vp.port_num = 0;
++
++	ret = ulpi_init(&ulpi_vp);
++	if (ret) {
++		printf("Efika USB ULPI initialization failed\n");
++		return;
++	}
++
++	/* ULPI set flags */
++	ulpi_write(&ulpi_vp, &ulpi->otg_ctrl,
++			ULPI_OTG_DP_PULLDOWN | ULPI_OTG_DM_PULLDOWN |
++			ULPI_OTG_EXTVBUSIND);
++	ulpi_write(&ulpi_vp, &ulpi->function_ctrl,
++			ULPI_FC_FULL_SPEED | ULPI_FC_OPMODE_NORMAL |
++			ULPI_FC_SUSPENDM);
++	ulpi_write(&ulpi_vp, &ulpi->iface_ctrl, 0);
++
++	/* Set VBus */
++	ulpi_write(&ulpi_vp, &ulpi->otg_ctrl_set,
++			ULPI_OTG_DRVVBUS | ULPI_OTG_DRVVBUS_EXT);
++
++	/*
++	 * Set VBusChrg
++	 *
++	 * NOTE: This violates USB specification, but otherwise, USB on Efika
++	 * doesn't work.
++	 */
++	ulpi_write(&ulpi_vp, &ulpi->otg_ctrl_set, ULPI_OTG_CHRGVBUS);
++}
++
++int board_ehci_hcd_init(int port)
++{
++	/* Init iMX51 EHCI */
++	efika_usb_phy_reset();
++	efika_usb_hub_reset();
++	efika_usb_enable_devices();
++
++	return 0;
++}
++
++/* This overrides a weak function */
++void mx5_ehci_powerup_fixup(struct ehci_ctrl *ctrl, uint32_t *status_reg,
++			   uint32_t *reg)
++{
++	uint32_t port = OTG_BASE_ADDR + (0x200 * CONFIG_MXC_USB_PORT);
++	struct usb_ehci *ehci = (struct usb_ehci *)port;
++	struct ulpi_regs *ulpi = (struct ulpi_regs *)0;
++	struct ulpi_viewport ulpi_vp;
++
++	ulpi_vp.viewport_addr = (u32)&ehci->ulpi_viewpoint;
++	ulpi_vp.port_num = 0;
++
++	ulpi_write(&ulpi_vp, &ulpi->otg_ctrl_set, ULPI_OTG_CHRGVBUS);
++
++	mdelay(50);
++
++	/* terminate the reset */
++	*reg = ehci_readl(status_reg);
++	*reg |= EHCI_PS_PE;
++}
++
++void board_ehci_hcd_postinit(struct usb_ehci *ehci, int port)
++{
++	uint32_t tmp;
++
++	if (port == 0) {
++		/* Adjust UTMI PHY frequency to 24MHz */
++		tmp = readl(OTG_BASE_ADDR + 0x80c);
++		tmp = (tmp & ~0x3) | 0x01;
++		writel(tmp, OTG_BASE_ADDR + 0x80c);
++	} else if (port == 1) {
++		efika_ehci_init(ehci, IMX_GPIO_NR(1, 27),
++				MX51_PAD_USBH1_STP__GPIO1_27,
++				MX51_PAD_USBH1_STP__USBH1_STP);
++	} else if ((port == 2) && machine_is_efikasb()) {
++		efika_ehci_init(ehci, IMX_GPIO_NR(2, 20),
++				MX51_PAD_EIM_A26__GPIO2_20,
++				MX51_PAD_EIM_A26__USBH2_STP);
++	}
++
++	if (port)
++		mdelay(10);
++}
++
++/*
++ * Ethernet on the Smarttop is on the USB bus. Rather than give an error about
++ * "CPU Net Initialization Failed", just pass this test since no other settings
++ * are required. Smartbook doesn't have built-in Ethernet but we will let it
++ * pass anyway considering someone may have plugged in a USB stick and all
++ * they need to do is run "usb start".
++ */
++int board_eth_init(bd_t *bis)
++{
++	return 0;
++}
+diff -purN u-boot-2017.11.orig/board/freescale/mx51_efikamx/efikamx.c u-boot-2017.11/board/freescale/mx51_efikamx/efikamx.c
+--- u-boot-2017.11.orig/board/freescale/mx51_efikamx/efikamx.c	1970-01-01 00:00:00.000000000 +0000
++++ u-boot-2017.11/board/freescale/mx51_efikamx/efikamx.c	2015-07-14 17:32:21.000000000 +0000
+@@ -0,0 +1,509 @@
++/*
++ * Copyright (C) 2009 Freescale Semiconductor, Inc.
++ * Copyright (C) 2010 Marek Vasut <marek.vasut@gmail.com>
++ * Copyright (C) 2009-2012 Genesi USA, Inc.
++ *
++ * SPDX-License-Identifier:	GPL-2.0+
++ */
++
++#include <common.h>
++#include <asm/io.h>
++#include <asm/arch/iomux-mx51.h>
++#include <asm/gpio.h>
++#include <asm/errno.h>
++#include <asm/arch/sys_proto.h>
++#include <asm/arch/crm_regs.h>
++#include <asm/arch/clock.h>
++#include <asm/imx-common/spi.h>
++#include <i2c.h>
++#include <mmc.h>
++#include <fsl_esdhc.h>
++#include <power/pmic.h>
++#include <fsl_pmic.h>
++#include <mc13892.h>
++
++DECLARE_GLOBAL_DATA_PTR;
++
++/*
++ * Compile-time error checking
++ */
++#ifndef	CONFIG_MXC_SPI
++#error "CONFIG_MXC_SPI not set, this is essential for board's operation!"
++#endif
++
++/*
++ * Board revisions
++ *
++ * Note that we get these revisions here for convenience, but we only set
++ * up for the production model Smarttop (1.3) and Smartbook (2.0).
++ *
++ */
++#define	EFIKAMX_BOARD_REV_11	0x1
++#define	EFIKAMX_BOARD_REV_12	0x2
++#define	EFIKAMX_BOARD_REV_13	0x3
++#define	EFIKAMX_BOARD_REV_14	0x4
++
++#define	EFIKASB_BOARD_REV_13	0x1
++#define	EFIKASB_BOARD_REV_20	0x2
++
++/*
++ * Board identification
++ */
++static u32 get_mx_rev(void)
++{
++	u32 rev = 0;
++	/*
++	 * Retrieve board ID:
++	 *
++	 *  gpio: 16 17 11
++	 *  ==============
++	 *	r1.1:  1+ 1  1
++	 *	r1.2:  1  1  0
++	 *	r1.3:  1  0  1
++	 *	r1.4:  1  0  0
++	 *
++	 * + note: r1.1 does not strap this pin properly so it needs to
++	 *         be hacked or ignored.
++	 */
++
++	/* set to 1 in order to get correct value on board rev 1.1 */
++	gpio_direction_output(IMX_GPIO_NR(3, 16), 1);
++	gpio_direction_input(IMX_GPIO_NR(3, 11));
++	gpio_direction_input(IMX_GPIO_NR(3, 16));
++	gpio_direction_input(IMX_GPIO_NR(3, 17));
++
++	rev |= (!!gpio_get_value(IMX_GPIO_NR(3, 16))) << 0;
++	rev |= (!!gpio_get_value(IMX_GPIO_NR(3, 17))) << 1;
++	rev |= (!!gpio_get_value(IMX_GPIO_NR(3, 11))) << 2;
++
++	return (~rev & 0x7) + 1;
++}
++
++static iomux_v3_cfg_t const efikasb_revision_pads[] = {
++	MX51_PAD_EIM_CS3__GPIO2_28,
++	MX51_PAD_EIM_CS4__GPIO2_29,
++};
++
++static inline u32 get_sb_rev(void)
++{
++	u32 rev = 0;
++
++	imx_iomux_v3_setup_multiple_pads(efikasb_revision_pads,
++				ARRAY_SIZE(efikasb_revision_pads));
++	gpio_direction_input(IMX_GPIO_NR(2, 28));
++	gpio_direction_input(IMX_GPIO_NR(2, 29));
++
++	rev |= (!!gpio_get_value(IMX_GPIO_NR(2, 28))) << 0;
++	rev |= (!!gpio_get_value(IMX_GPIO_NR(2, 29))) << 1;
++
++	return rev;
++}
++
++inline uint32_t get_efikamx_rev(void)
++{
++	if (machine_is_efikamx())
++		return get_mx_rev();
++	else if (machine_is_efikasb())
++		return get_sb_rev();
++}
++
++u32 get_board_rev(void)
++{
++	return get_cpu_rev() | (get_efikamx_rev() << 8);
++}
++
++/*
++ * DRAM initialization
++ */
++int dram_init(void)
++{
++	/* dram_init must store complete ramsize in gd->ram_size */
++	gd->ram_size = get_ram_size((void *)CONFIG_SYS_SDRAM_BASE,
++						PHYS_SDRAM_1_SIZE);
++	return 0;
++}
++
++/*
++ * UART configuration
++ */
++static iomux_v3_cfg_t const efikamx_uart_pads[] = {
++	MX51_PAD_UART1_RXD__UART1_RXD,
++	MX51_PAD_UART1_TXD__UART1_TXD,
++	MX51_PAD_UART1_RTS__UART1_RTS,
++	MX51_PAD_UART1_CTS__UART1_CTS,
++};
++
++/*
++ * SPI configuration
++ */
++static iomux_v3_cfg_t const efikamx_spi_pads[] = {
++	MX51_PAD_CSPI1_MOSI__ECSPI1_MOSI,
++	MX51_PAD_CSPI1_MISO__ECSPI1_MISO,
++	MX51_PAD_CSPI1_SCLK__ECSPI1_SCLK,
++	MX51_PAD_CSPI1_SS0__GPIO4_24,
++	MX51_PAD_CSPI1_SS1__GPIO4_25,
++	MX51_PAD_GPIO1_6__GPIO1_6,
++};
++
++#define EFIKAMX_SPI_SS0		IMX_GPIO_NR(4, 24)
++#define EFIKAMX_SPI_SS1		IMX_GPIO_NR(4, 25)
++#define EFIKAMX_PMIC_IRQ	IMX_GPIO_NR(1, 6)
++
++/*
++ * PMIC configuration
++ */
++#ifdef CONFIG_MXC_SPI
++int board_spi_cs_gpio(unsigned bus, unsigned cs)
++{
++	return (bus == 0 && cs == 1) ? 121 : -1;
++}
++
++static void power_init(void)
++{
++	unsigned int val;
++	struct mxc_ccm_reg *mxc_ccm = (struct mxc_ccm_reg *)MXC_CCM_BASE;
++	struct pmic *p;
++	int ret;
++
++	ret = pmic_init(CONFIG_FSL_PMIC_BUS);
++	if (ret)
++		return;
++
++	p = pmic_get("FSL_PMIC");
++	if (!p)
++		return;
++
++	/* Write needed to Power Gate 2 register */
++	pmic_reg_read(p, REG_POWER_MISC, &val);
++	val &= ~PWGT2SPIEN;
++	pmic_reg_write(p, REG_POWER_MISC, val);
++
++	/* Externally powered */
++	pmic_reg_read(p, REG_CHARGE, &val);
++	val |= ICHRG0 | ICHRG1 | ICHRG2 | ICHRG3 | CHGAUTOB;
++	pmic_reg_write(p, REG_CHARGE, val);
++
++	/* power up the system first */
++	pmic_reg_write(p, REG_POWER_MISC, PWUP);
++
++	/* Set core voltage to 1.1V */
++	pmic_reg_read(p, REG_SW_0, &val);
++	val = (val & ~SWx_VOLT_MASK) | SWx_1_100V;
++	pmic_reg_write(p, REG_SW_0, val);
++
++	/* Setup VCC (SW2) to 1.25 */
++	pmic_reg_read(p, REG_SW_1, &val);
++	val = (val & ~SWx_VOLT_MASK) | SWx_1_250V;
++	pmic_reg_write(p, REG_SW_1, val);
++
++	/* Setup 1V2_DIG1 (SW3) to 1.25 */
++	pmic_reg_read(p, REG_SW_2, &val);
++	val = (val & ~SWx_VOLT_MASK) | SWx_1_250V;
++	pmic_reg_write(p, REG_SW_2, val);
++	udelay(50);
++
++	/* Raise the core frequency to 800MHz */
++	writel(0x0, &mxc_ccm->cacrr);
++
++	/* Set switchers in Auto in NORMAL mode & STANDBY mode */
++	/* Setup the switcher mode for SW1 & SW2*/
++	pmic_reg_read(p, REG_SW_4, &val);
++	val = (val & ~((SWMODE_MASK << SWMODE1_SHIFT) |
++		(SWMODE_MASK << SWMODE2_SHIFT)));
++	val |= (SWMODE_AUTO_AUTO << SWMODE1_SHIFT) |
++		(SWMODE_AUTO_AUTO << SWMODE2_SHIFT);
++	pmic_reg_write(p, REG_SW_4, val);
++
++	/* Setup the switcher mode for SW3 & SW4 */
++	pmic_reg_read(p, REG_SW_5, &val);
++	val = (val & ~((SWMODE_MASK << SWMODE3_SHIFT) |
++		(SWMODE_MASK << SWMODE4_SHIFT)));
++	val |= (SWMODE_AUTO_AUTO << SWMODE3_SHIFT) |
++		(SWMODE_AUTO_AUTO << SWMODE4_SHIFT);
++	pmic_reg_write(p, REG_SW_5, val);
++
++	/* Set VDIG to 1.8V, VGEN3 to 1.8V, VCAM to 2.6V */
++	pmic_reg_read(p, REG_SETTING_0, &val);
++	val &= ~(VCAM_MASK | VGEN3_MASK | VDIG_MASK);
++	val |= VDIG_1_8 | VGEN3_1_8 | VCAM_2_6;
++	pmic_reg_write(p, REG_SETTING_0, val);
++
++	/* Set VVIDEO to 2.775V, VAUDIO to 3V, VSD to 3.15V */
++	pmic_reg_read(p, REG_SETTING_1, &val);
++	val &= ~(VVIDEO_MASK | VSD_MASK | VAUDIO_MASK);
++	val |= VSD_3_15 | VAUDIO_3_0 | VVIDEO_2_775 | VGEN1_1_2 | VGEN2_3_15;
++	pmic_reg_write(p, REG_SETTING_1, val);
++
++	/* Enable VGEN1, VGEN2, VDIG, VPLL */
++	pmic_reg_read(p, REG_MODE_0, &val);
++	val |= VGEN1EN | VDIGEN | VGEN2EN | VPLLEN;
++	pmic_reg_write(p, REG_MODE_0, val);
++
++	/* Configure VGEN3 and VCAM regulators to use external PNP */
++	val = VGEN3CONFIG | VCAMCONFIG;
++	pmic_reg_write(p, REG_MODE_1, val);
++	udelay(200);
++
++	/* Enable VGEN3, VCAM, VAUDIO, VVIDEO, VSD regulators */
++	val = VGEN3EN | VGEN3CONFIG | VCAMEN | VCAMCONFIG |
++		VVIDEOEN | VAUDIOEN | VSDEN;
++	pmic_reg_write(p, REG_MODE_1, val);
++
++	pmic_reg_read(p, REG_POWER_CTL2, &val);
++	val |= WDIRESET;
++	pmic_reg_write(p, REG_POWER_CTL2, val);
++
++	udelay(2500);
++}
++#else
++static inline void power_init(void) { }
++#endif
++
++/*
++ * MMC configuration
++ */
++#ifdef CONFIG_FSL_ESDHC
++
++struct fsl_esdhc_cfg esdhc_cfg[2] = {
++	{MMC_SDHC1_BASE_ADDR},
++	{MMC_SDHC2_BASE_ADDR},
++};
++
++static iomux_v3_cfg_t const efikamx_sdhc1_pads[] = {
++	MX51_PAD_SD1_CMD__SD1_CMD,
++	MX51_PAD_SD1_CLK__SD1_CLK,
++	MX51_PAD_SD1_DATA0__SD1_DATA0,
++	MX51_PAD_SD1_DATA1__SD1_DATA1,
++	MX51_PAD_SD1_DATA2__SD1_DATA2,
++	MX51_PAD_SD1_DATA3__SD1_DATA3,
++	MX51_PAD_GPIO1_1__SD1_WP,
++};
++
++#define EFIKAMX_SDHC1_WP	IMX_GPIO_NR(1, 1)
++
++static iomux_v3_cfg_t const efikamx_sdhc1_cd_pads[] = {
++	MX51_PAD_GPIO1_0__SD1_CD,
++	NEW_PAD_CTRL(MX51_PAD_EIM_CS2__GPIO2_27, MX51_ESDHC_PAD_CTRL),
++};
++
++#define EFIKAMX_SDHC1_CD	IMX_GPIO_NR(1, 0)
++#define EFIKASB_SDHC1_CD	IMX_GPIO_NR(2, 27)
++
++static iomux_v3_cfg_t const efikasb_sdhc2_pads[] = {
++	MX51_PAD_SD2_CMD__SD2_CMD,
++	MX51_PAD_SD2_CLK__SD2_CLK,
++	MX51_PAD_SD2_DATA0__SD2_DATA0,
++	MX51_PAD_SD2_DATA1__SD2_DATA1,
++	MX51_PAD_SD2_DATA2__SD2_DATA2,
++	MX51_PAD_SD2_DATA3__SD2_DATA3,
++	MX51_PAD_GPIO1_7__SD2_WP,
++	MX51_PAD_GPIO1_8__SD2_CD,
++};
++
++#define EFIKASB_SDHC2_CD	IMX_GPIO_NR(1, 8)
++#define EFIKASB_SDHC2_WP	IMX_GPIO_NR(1, 7)
++
++static inline uint32_t efikamx_mmc_getcd(u32 base)
++{
++	if (base == MMC_SDHC1_BASE_ADDR)
++		if (machine_is_efikamx())
++			return EFIKAMX_SDHC1_CD;
++		else
++			return EFIKASB_SDHC1_CD;
++	else
++		return EFIKASB_SDHC2_CD;
++}
++
++int board_mmc_getcd(struct mmc *mmc)
++{
++	struct fsl_esdhc_cfg *cfg = (struct fsl_esdhc_cfg *)mmc->priv;
++	uint32_t cd = efikamx_mmc_getcd(cfg->esdhc_base);
++	int ret = !gpio_get_value(cd);
++
++	return ret;
++}
++
++int board_mmc_init(bd_t *bis)
++{
++	int ret;
++
++	/*
++	 * All Efika MX boards use eSDHC1 with a common write-protect GPIO
++	 */
++	imx_iomux_v3_setup_multiple_pads(efikamx_sdhc1_pads,
++					ARRAY_SIZE(efikamx_sdhc1_pads));
++	gpio_direction_input(EFIKAMX_SDHC1_WP);
++
++	/*
++	 * Smartbook and Smarttop differ on the location of eSDHC1
++	 * carrier-detect GPIO
++	 */
++	if (machine_is_efikamx()) {
++		imx_iomux_v3_setup_pad(efikamx_sdhc1_cd_pads[0]);
++		gpio_direction_input(EFIKAMX_SDHC1_CD);
++	} else if (machine_is_efikasb()) {
++		imx_iomux_v3_setup_pad(efikamx_sdhc1_cd_pads[1]);
++		gpio_direction_input(EFIKASB_SDHC1_CD);
++	}
++
++	esdhc_cfg[0].sdhc_clk = mxc_get_clock(MXC_ESDHC_CLK);
++	esdhc_cfg[1].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
++
++	ret = fsl_esdhc_initialize(bis, &esdhc_cfg[0]);
++
++	if (machine_is_efikasb()) {
++
++		imx_iomux_v3_setup_multiple_pads(efikasb_sdhc2_pads,
++						ARRAY_SIZE(efikasb_sdhc2_pads));
++		gpio_direction_input(EFIKASB_SDHC2_CD);
++		gpio_direction_input(EFIKASB_SDHC2_WP);
++		if (!ret)
++			ret = fsl_esdhc_initialize(bis, &esdhc_cfg[1]);
++	}
++
++	return ret;
++}
++#endif
++
++/*
++ * PATA
++ */
++static iomux_v3_cfg_t const efikamx_pata_pads[] = {
++	MX51_PAD_NANDF_WE_B__PATA_DIOW,
++	MX51_PAD_NANDF_RE_B__PATA_DIOR,
++	MX51_PAD_NANDF_ALE__PATA_BUFFER_EN,
++	MX51_PAD_NANDF_CLE__PATA_RESET_B,
++	MX51_PAD_NANDF_WP_B__PATA_DMACK,
++	MX51_PAD_NANDF_RB0__PATA_DMARQ,
++	MX51_PAD_NANDF_RB1__PATA_IORDY,
++	MX51_PAD_GPIO_NAND__PATA_INTRQ,
++	MX51_PAD_NANDF_CS2__PATA_CS_0,
++	MX51_PAD_NANDF_CS3__PATA_CS_1,
++	MX51_PAD_NANDF_CS4__PATA_DA_0,
++	MX51_PAD_NANDF_CS5__PATA_DA_1,
++	MX51_PAD_NANDF_CS6__PATA_DA_2,
++	MX51_PAD_NANDF_D15__PATA_DATA15,
++	MX51_PAD_NANDF_D14__PATA_DATA14,
++	MX51_PAD_NANDF_D13__PATA_DATA13,
++	MX51_PAD_NANDF_D12__PATA_DATA12,
++	MX51_PAD_NANDF_D11__PATA_DATA11,
++	MX51_PAD_NANDF_D10__PATA_DATA10,
++	MX51_PAD_NANDF_D9__PATA_DATA9,
++	MX51_PAD_NANDF_D8__PATA_DATA8,
++	MX51_PAD_NANDF_D7__PATA_DATA7,
++	MX51_PAD_NANDF_D6__PATA_DATA6,
++	MX51_PAD_NANDF_D5__PATA_DATA5,
++	MX51_PAD_NANDF_D4__PATA_DATA4,
++	MX51_PAD_NANDF_D3__PATA_DATA3,
++	MX51_PAD_NANDF_D2__PATA_DATA2,
++	MX51_PAD_NANDF_D1__PATA_DATA1,
++	MX51_PAD_NANDF_D0__PATA_DATA0,
++};
++
++/*
++ * EHCI USB
++ */
++#ifdef	CONFIG_CMD_USB
++extern void setup_iomux_usb(void);
++#else
++static inline void setup_iomux_usb(void) { }
++#endif
++
++/*
++ * LED configuration
++ *
++ * Smarttop LED pad config is done in the DCD
++ *
++ */
++#define EFIKAMX_LED_BLUE	IMX_GPIO_NR(3, 13)
++#define EFIKAMX_LED_GREEN	IMX_GPIO_NR(3, 14)
++#define EFIKAMX_LED_RED		IMX_GPIO_NR(3, 15)
++
++static iomux_v3_cfg_t const efikasb_led_pads[] = {
++	MX51_PAD_GPIO1_3__GPIO1_3,
++	MX51_PAD_EIM_CS0__GPIO2_25,
++};
++
++#define EFIKASB_CAPSLOCK_LED	IMX_GPIO_NR(2, 25)
++#define EFIKASB_MESSAGE_LED	IMX_GPIO_NR(1, 3) /* Note: active low */
++
++/*
++ * Board initialization
++ */
++int board_early_init_f(void)
++{
++	if (machine_is_efikasb()) {
++		imx_iomux_v3_setup_multiple_pads(efikasb_led_pads,
++						ARRAY_SIZE(efikasb_led_pads));
++		gpio_direction_output(EFIKASB_CAPSLOCK_LED, 0);
++		gpio_direction_output(EFIKASB_MESSAGE_LED, 1);
++	} else if (machine_is_efikamx()) {
++		/*
++		 * Set up GPIO directions for LEDs.
++		 * IOMUX has been done in the DCD already.
++		 * Turn the red LED on for pre-relocation code.
++		 */
++		gpio_direction_output(EFIKAMX_LED_BLUE, 0);
++		gpio_direction_output(EFIKAMX_LED_GREEN, 0);
++		gpio_direction_output(EFIKAMX_LED_RED, 1);
++	}
++
++	/*
++	 * Both these pad configurations for UART and SPI are kind of redundant
++	 * since they are the Power-On Defaults for the i.MX51. But, it seems we
++	 * should make absolutely sure that they are set up correctly.
++	 */
++	imx_iomux_v3_setup_multiple_pads(efikamx_uart_pads,
++					ARRAY_SIZE(efikamx_uart_pads));
++	imx_iomux_v3_setup_multiple_pads(efikamx_spi_pads,
++					ARRAY_SIZE(efikamx_spi_pads));
++
++	/* not technically required for U-Boot operation but do it anyway. */
++	gpio_direction_input(EFIKAMX_PMIC_IRQ);
++	/* Deselect both CS for now, otherwise NOR doesn't probe properly. */
++	gpio_direction_output(EFIKAMX_SPI_SS0, 0);
++	gpio_direction_output(EFIKAMX_SPI_SS1, 1);
++
++	return 0;
++}
++
++int board_init(void)
++{
++	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
++
++	return 0;
++}
++
++int board_late_init(void)
++{
++	if (machine_is_efikamx()) {
++		/*
++		 * Set up Blue LED for "In U-Boot" status.
++		 * We're all relocated and ready to U-Boot!
++		 */
++		gpio_set_value(EFIKAMX_LED_RED, 0);
++		gpio_set_value(EFIKAMX_LED_GREEN, 0);
++		gpio_set_value(EFIKAMX_LED_BLUE, 1);
++	}
++
++	power_init();
++
++	imx_iomux_v3_setup_multiple_pads(efikamx_pata_pads,
++					ARRAY_SIZE(efikamx_pata_pads));
++	setup_iomux_usb();
++
++	return 0;
++}
++
++int checkboard(void)
++{
++	u32 rev = get_efikamx_rev();
++
++	printf("Board: Genesi Efika MX ");
++	if (machine_is_efikamx())
++		printf("Smarttop (1.%i)\n", rev & 0xf);
++	else if (machine_is_efikasb())
++		printf("Smartbook\n");
++
++	return 0;
++}
+diff -purN u-boot-2017.11.orig/board/freescale/mx51_efikamx/imximage_mx.cfg u-boot-2017.11/board/freescale/mx51_efikamx/imximage_mx.cfg
+--- u-boot-2017.11.orig/board/freescale/mx51_efikamx/imximage_mx.cfg	1970-01-01 00:00:00.000000000 +0000
++++ u-boot-2017.11/board/freescale/mx51_efikamx/imximage_mx.cfg	2015-07-14 17:32:21.000000000 +0000
+@@ -0,0 +1,118 @@
++/*
++ * Copyright (C) 2009 Pegatron Corporation
++ * Copyright (C) 2010 Marek Vasut <marek.vasut@gmail.com>
++ * Copyright (C) 2009-2012 Genesi USA, Inc.
++ *
++ * BASED ON: imx51evk
++ *
++ * (C) Copyright 2009
++ * Stefano Babic DENX Software Engineering sbabic@denx.de.
++ *
++ * SPDX-License-Identifier:	GPL-2.0+
++ *
++ * Refer doc/README.imximage for more details about how-to configure
++ * and create imximage boot image
++ *
++ * The syntax is taken as close as possible with the kwbimage
++ */
++
++/*
++ * Boot Device : one of
++ * spi, sd (the board has no nand neither onenand)
++ */
++BOOT_FROM	spi
++
++/*
++ * Device Configuration Data (DCD)
++ *
++ * Each entry must have the format:
++ * Addr-type           Address        Value
++ *
++ * where:
++ *	Addr-type register length (1,2 or 4 bytes)
++ *	Address	  absolute address of the register
++ *	value	  value to be stored in the register
++ */
++/*
++ * Essential GPIO settings to be done as early as possible
++ * PCBIDn pad settings are all the defaults except #2 which needs HVE off
++ */
++DATA 4 0x73fa8134 0x3			# PCBID0 ALT3 GPIO 3_16
++DATA 4 0x73fa8130 0x3			# PCBID1 ALT3 GPIO 3_17
++DATA 4 0x73fa8128 0x3			# PCBID2 ALT3 GPIO 3_11
++DATA 4 0x73fa8504 0xe4			# PCBID2 PAD ~HVE
++DATA 4 0x73fa8198 0x3			# LED0 ALT3 GPIO 3_13
++DATA 4 0x73fa81c4 0x3			# LED1 ALT3 GPIO 3_14
++DATA 4 0x73fa81c8 0x3			# LED2 ALT3 GPIO 3_15
++
++/* DDR bus IOMUX PAD settings */
++DATA 4 0x73fa850c 0x20c5		# SDODT1
++DATA 4 0x73fa8510 0x20c5		# SDODT0
++DATA 4 0x73fa84ac 0xc5			# SDWE
++DATA 4 0x73fa84b0 0xc5			# SDCKE0
++DATA 4 0x73fa84b4 0xc5			# SDCKE1
++DATA 4 0x73fa84cc 0xc5			# DRAM_CS0
++DATA 4 0x73fa84d0 0xc5			# DRAM_CS1
++DATA 4 0x73fa882c 0x2			# DRAM_B4
++DATA 4 0x73fa88a4 0x2			# DRAM_B0
++DATA 4 0x73fa88ac 0x2			# DRAM_B1
++DATA 4 0x73fa88b8 0x2			# DRAM_B2
++DATA 4 0x73fa84d4 0xc5			# DRAM_DQM0
++DATA 4 0x73fa84d8 0xc5			# DRAM_DQM1
++DATA 4 0x73fa84dc 0xc5			# DRAM_DQM2
++DATA 4 0x73fa84e0 0xc5			# DRAM_DQM3
++
++/*
++ * Setting DDR for micron
++ * 13 Rows, 10 Cols, 32 bit, SREF=4 Micron Model
++ * CAS=3 BL=4
++ */
++/* ESDCTL_ESDCTL0 */
++DATA 4 0x83fd9000 0x82a20000
++/* ESDCTL_ESDCTL1 */
++DATA 4 0x83fd9008 0x82a20000
++/* ESDCTL_ESDMISC */
++DATA 4 0x83fd9010 0xcaaaf6d0
++/* ESDCTL_ESDCFG0 */
++DATA 4 0x83fd9004 0x3f3574aa
++/* ESDCTL_ESDCFG1 */
++DATA 4 0x83fd900c 0x3f3574aa
++
++/* Init DRAM on CS0 */
++/* ESDCTL_ESDSCR */
++DATA 4 0x83fd9014 0x04008008
++DATA 4 0x83fd9014 0x0000801a
++DATA 4 0x83fd9014 0x0000801b
++DATA 4 0x83fd9014 0x00448019
++DATA 4 0x83fd9014 0x07328018
++DATA 4 0x83fd9014 0x04008008
++DATA 4 0x83fd9014 0x00008010
++DATA 4 0x83fd9014 0x00008010
++DATA 4 0x83fd9014 0x06328018
++DATA 4 0x83fd9014 0x03808019
++DATA 4 0x83fd9014 0x00408019
++DATA 4 0x83fd9014 0x00008000
++
++/* Init DRAM on CS1 */
++DATA 4 0x83fd9014 0x0400800c
++DATA 4 0x83fd9014 0x0000801e
++DATA 4 0x83fd9014 0x0000801f
++DATA 4 0x83fd9014 0x0000801d
++DATA 4 0x83fd9014 0x0732801c
++DATA 4 0x83fd9014 0x0400800c
++DATA 4 0x83fd9014 0x00008014
++DATA 4 0x83fd9014 0x00008014
++DATA 4 0x83fd9014 0x0632801c
++DATA 4 0x83fd9014 0x0380801d
++DATA 4 0x83fd9014 0x0040801d
++DATA 4 0x83fd9014 0x00008004
++
++/* Write to CTL0 */
++DATA 4 0x83fd9000 0xb2a20000
++/* Write to CTL1 */
++DATA 4 0x83fd9008 0xb2a20000
++/* ESDMISC */
++DATA 4 0x83fd9010 0x000ad6d0
++/* ESDCTL_ESDCDLYGD */
++DATA 4 0x83fd9034 0x90000000
++DATA 4 0x83fd9014 0x00000000
+diff -purN u-boot-2017.11.orig/board/freescale/mx51_efikamx/imximage_sb.cfg u-boot-2017.11/board/freescale/mx51_efikamx/imximage_sb.cfg
+--- u-boot-2017.11.orig/board/freescale/mx51_efikamx/imximage_sb.cfg	1970-01-01 00:00:00.000000000 +0000
++++ u-boot-2017.11/board/freescale/mx51_efikamx/imximage_sb.cfg	2015-07-14 17:32:21.000000000 +0000
+@@ -0,0 +1,101 @@
++/*
++ * Copyright (C) 2009 Pegatron Corporation
++ * Copyright (C) 2010 Marek Vasut <marek.vasut@gmail.com>
++ * Copyright (C) 2009-2012 Genesi USA, Inc.
++ *
++ * BASED ON: imx51evk
++ *
++ * (C) Copyright 2009
++ * Stefano Babic DENX Software Engineering sbabic@denx.de.
++ *
++ * SPDX-License-Identifier:	GPL-2.0+
++ */
++
++/*
++ * Boot Device : one of
++ * spi, sd (the board has no nand neither onenand)
++ */
++BOOT_FROM	spi
++
++/*
++ * Device Configuration Data (DCD)
++ *
++ * Each entry must have the format:
++ * Addr-type           Address        Value
++ *
++ * where:
++ *	Addr-type register length (1,2 or 4 bytes)
++ *	Address	  absolute address of the register
++ *	value	  value to be stored in the register
++*/
++/* DDR bus IOMUX PAD settings */
++DATA 4 0x73fa88a0 0x200		# GRP_INMODE1
++DATA 4 0x73fa850c 0x20c5	# SDODT1
++DATA 4 0x73fa8510 0x20c5	# SDODT0
++DATA 4 0x73fa8848 0x4		# DDR_A1
++DATA 4 0x73fa84b8 0xe7		# DRAM_SDCLK
++DATA 4 0x73fa84bc 0x45		# DRAM_SDQS0
++DATA 4 0x73fa84c0 0x45		# DRAM_SDQS1
++DATA 4 0x73fa84c4 0x45		# DRAM_SDQS2
++DATA 4 0x73fa84c8 0x45		# DRAM_SDQS3
++DATA 4 0x73fa8820 0x0		# DDRPKS
++DATA 4 0x73fa84ac 0xe5		# SDWE
++DATA 4 0x73fa84b0 0xe5		# SDCKE0
++DATA 4 0x73fa84b4 0xe5		# SDCKE1
++DATA 4 0x73fa84cc 0xe5		# DRAM_CS0
++DATA 4 0x73fa84d0 0xe4		# DRAM_CS1
++
++/*
++ * Setting DDR for micron
++ * 13 Rows, 10 Cols, 32 bit, SREF=4 Micron Model
++ * CAS=3 BL=4
++ */
++/* ESDCTL_ESDCTL0 */
++DATA 4 0x83fd9000 0x82a20000
++/* ESDCTL_ESDCTL1 */
++DATA 4 0x83fd9008 0x82a20000
++/* ESDCTL_ESDMISC */
++DATA 4 0x83fd9010 0xcaaaf6d0
++/* ESDCTL_ESDCFG0 */
++DATA 4 0x83fd9004 0x333574aa
++/* ESDCTL_ESDCFG1 */
++DATA 4 0x83fd900c 0x333574aa
++
++/* Init DRAM on CS0 */
++/* ESDCTL_ESDSCR */
++DATA 4 0x83fd9014 0x04008008
++DATA 4 0x83fd9014 0x0000801a
++DATA 4 0x83fd9014 0x0000801b
++DATA 4 0x83fd9014 0x00448019
++DATA 4 0x83fd9014 0x07328018
++DATA 4 0x83fd9014 0x04008008
++DATA 4 0x83fd9014 0x00008010
++DATA 4 0x83fd9014 0x00008010
++DATA 4 0x83fd9014 0x06328018
++DATA 4 0x83fd9014 0x03808019
++DATA 4 0x83fd9014 0x00408019
++DATA 4 0x83fd9014 0x00008000
++
++/* Init DRAM on CS1 */
++DATA 4 0x83fd9014 0x0400800c
++DATA 4 0x83fd9014 0x0000801e
++DATA 4 0x83fd9014 0x0000801f
++DATA 4 0x83fd9014 0x0000801d
++DATA 4 0x83fd9014 0x0732801c
++DATA 4 0x83fd9014 0x0400800c
++DATA 4 0x83fd9014 0x00008014
++DATA 4 0x83fd9014 0x00008014
++DATA 4 0x83fd9014 0x0632801c
++DATA 4 0x83fd9014 0x0380801d
++DATA 4 0x83fd9014 0x0042801d
++DATA 4 0x83fd9014 0x00008004
++
++/* Write to CTL0 */
++DATA 4 0x83fd9000 0xb2a20000
++/* Write to CTL1 */
++DATA 4 0x83fd9008 0xb2a20000
++/* ESDMISC */
++DATA 4 0x83fd9010 0xcaaaf6d0
++/* ESDCTL_ESDCDLYGD */
++DATA 4 0x83fd9034 0x90000000
++DATA 4 0x83fd9014 0x00000000
+diff -purN u-boot-2017.11.orig/configs/mx51_efikamx_defconfig u-boot-2017.11/configs/mx51_efikamx_defconfig
+--- u-boot-2017.11.orig/configs/mx51_efikamx_defconfig	1970-01-01 00:00:00.000000000 +0000
++++ u-boot-2017.11/configs/mx51_efikamx_defconfig	2026-02-17 23:43:53.972263914 +0000
+@@ -0,0 +1,6 @@
++CONFIG_ARM=y
++CONFIG_ARCH_MX5=y
++CONFIG_TARGET_MX51_EFIKAMX=y
++CONFIG_SYS_CONFIG_NAME="mx51_efikamx"
++CONFIG_SYS_EXTRA_OPTIONS=IMX_CONFIG=board/freescale/mx51_efikamx/imximage_mx.cfg"
++CONFIG_SPI_FLASH=y
+diff -purN u-boot-2017.11.orig/include/configs/mx51_efikamx.h u-boot-2017.11/include/configs/mx51_efikamx.h
+--- u-boot-2017.11.orig/include/configs/mx51_efikamx.h	1970-01-01 00:00:00.000000000 +0000
++++ u-boot-2017.11/include/configs/mx51_efikamx.h	2015-07-14 17:32:21.000000000 +0000
+@@ -0,0 +1,243 @@
++/*
++ * Copyright (C) 2007, Guennadi Liakhovetski <lg@denx.de>
++ *
++ * (C) Copyright 2009 Freescale Semiconductor, Inc.
++ *
++ * Configuration settings for the MX51EVK Board
++ *
++ * SPDX-License-Identifier:	GPL-2.0+
++ */
++
++#ifndef __CONFIG_H
++#define __CONFIG_H
++
++/*
++ * High Level Board Configuration Options
++ */
++/* An i.MX51 CPU */
++#define CONFIG_MX51
++
++#define	machine_is_efikamx()	(CONFIG_MACH_TYPE == MACH_TYPE_MX51_EFIKAMX)
++#define	machine_is_efikasb()	(CONFIG_MACH_TYPE == MACH_TYPE_MX51_EFIKASB)
++
++#include <asm/arch/imx-regs.h>
++
++#define CONFIG_DISPLAY_CPUINFO
++#define CONFIG_DISPLAY_BOARDINFO
++
++#define CONFIG_SYS_TEXT_BASE		0x97800000
++
++#define	CONFIG_SYS_ICACHE_OFF
++#define	CONFIG_SYS_DCACHE_OFF
++
++/*
++ * Bootloader Components Configuration
++ */
++#define CONFIG_CMD_SPI
++#define CONFIG_CMD_SF
++#define CONFIG_CMD_MMC
++#define CONFIG_CMD_FAT
++#define CONFIG_CMD_EXT2
++#define CONFIG_CMD_IDE
++#define CONFIG_CMD_DATE
++
++/*
++ * Environmental settings
++ */
++
++#define CONFIG_ENV_OFFSET		(6 * 64 * 1024)
++#define CONFIG_ENV_SECT_SIZE		(1 * 64 * 1024)
++#define CONFIG_ENV_SIZE			(4 * 1024)
++
++/*
++ * ATAG setup
++ */
++#define CONFIG_CMDLINE_TAG		/* enable passing of ATAGs */
++#define CONFIG_REVISION_TAG
++#define CONFIG_SETUP_MEMORY_TAGS
++#define CONFIG_INITRD_TAG
++
++#define CONFIG_OF_LIBFDT		1
++
++/*
++ * Size of malloc() pool
++ */
++#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 2 * 1024 * 1024)
++
++#define CONFIG_BOARD_EARLY_INIT_F
++#define CONFIG_BOARD_LATE_INIT
++
++/*
++ * Hardware drivers
++ */
++#define CONFIG_MXC_UART
++#define CONFIG_MXC_UART_BASE		UART1_BASE
++#define CONFIG_CONS_INDEX		1
++#define CONFIG_BAUDRATE			115200
++
++#define CONFIG_MXC_GPIO
++
++/*
++ * SPI Interface
++ */
++#ifdef CONFIG_CMD_SPI
++
++#define CONFIG_HARD_SPI
++#define CONFIG_MXC_SPI
++#define CONFIG_DEFAULT_SPI_BUS		1
++#define CONFIG_DEFAULT_SPI_MODE		(SPI_MODE_0 | SPI_CS_HIGH)
++
++/* SPI FLASH */
++#ifdef CONFIG_CMD_SF
++
++#define CONFIG_SPI_FLASH_SST
++#define CONFIG_SF_DEFAULT_CS		1
++#define CONFIG_SF_DEFAULT_MODE		(SPI_MODE_0)
++#define CONFIG_SF_DEFAULT_SPEED		25000000
++
++#define CONFIG_ENV_SPI_CS		CONFIG_SF_DEFAULT_CS
++#define CONFIG_ENV_SPI_BUS		0
++#define CONFIG_ENV_SPI_MAX_HZ		25000000
++#define CONFIG_ENV_SPI_MODE		(SPI_MODE_0)
++#define CONFIG_FSL_ENV_IN_SF
++#define CONFIG_ENV_IS_IN_SPI_FLASH
++#define CONFIG_SYS_NO_FLASH
++
++#else
++#define CONFIG_ENV_IS_NOWHERE
++#endif
++
++/* SPI PMIC */
++#define CONFIG_POWER
++#define CONFIG_POWER_SPI
++#define CONFIG_POWER_FSL
++#define CONFIG_FSL_PMIC_BUS		0
++#define CONFIG_FSL_PMIC_CS		(0 | 120 << 8)
++#define CONFIG_FSL_PMIC_CLK		25000000
++#define CONFIG_FSL_PMIC_MODE		(SPI_MODE_0 | SPI_CS_HIGH)
++#define CONFIG_FSL_PMIC_BITLEN	32
++#define CONFIG_RTC_MC13XXX
++#endif
++
++/*
++ * MMC Configs
++ */
++#ifdef CONFIG_CMD_MMC
++#define CONFIG_MMC
++#define CONFIG_GENERIC_MMC
++#define CONFIG_FSL_ESDHC
++#define CONFIG_SYS_FSL_ESDHC_ADDR	0
++#define CONFIG_SYS_FSL_ESDHC_NUM	2
++#endif
++
++/*
++ * ATA/IDE
++ */
++#ifdef CONFIG_CMD_IDE
++#define CONFIG_LBA48
++#undef CONFIG_IDE_LED
++#undef CONFIG_IDE_RESET
++
++#define CONFIG_MX51_PATA
++
++#define __io
++
++#define CONFIG_SYS_IDE_MAXBUS		1
++#define CONFIG_SYS_IDE_MAXDEVICE	1
++
++#define CONFIG_SYS_ATA_BASE_ADDR	0x83fe0000
++#define CONFIG_SYS_ATA_IDE0_OFFSET	0x0
++
++#define CONFIG_SYS_ATA_DATA_OFFSET	0xa0
++#define CONFIG_SYS_ATA_REG_OFFSET	0xa0
++#define CONFIG_SYS_ATA_ALT_OFFSET	0xd8
++
++#define CONFIG_SYS_ATA_STRIDE		4
++
++#define CONFIG_IDE_PREINIT
++#define CONFIG_MXC_ATA_PIO_MODE		4
++#endif
++
++/*
++ * USB
++ */
++#define	CONFIG_CMD_USB
++#ifdef	CONFIG_CMD_USB
++#define	CONFIG_USB_EHCI			/* Enable EHCI USB support */
++#define	CONFIG_USB_EHCI_MX5
++#define	CONFIG_USB_ULPI
++#define	CONFIG_USB_ULPI_VIEWPORT
++#define	CONFIG_MXC_USB_PORT	1
++#if	(CONFIG_MXC_USB_PORT == 0)
++#define	CONFIG_MXC_USB_PORTSC	(1 << 28)
++#define	CONFIG_MXC_USB_FLAGS	MXC_EHCI_INTERNAL_PHY
++#else
++#define	CONFIG_MXC_USB_PORTSC	(2 << 30)
++#define	CONFIG_MXC_USB_FLAGS	0
++#endif
++#define	CONFIG_EHCI_IS_TDI
++#define	CONFIG_USB_STORAGE
++#define	CONFIG_USB_HOST_ETHER
++#define	CONFIG_USB_KEYBOARD
++#define	CONFIG_SYS_USB_EVENT_POLL_VIA_CONTROL_EP
++#define CONFIG_PREBOOT
++/* USB NET */
++#ifdef	CONFIG_CMD_NET
++#define	CONFIG_USB_ETHER_ASIX
++#define	CONFIG_CMD_PING
++#define	CONFIG_CMD_DHCP
++#endif
++#endif /* CONFIG_CMD_USB */
++
++/*
++ * Filesystems
++ */
++#ifdef CONFIG_CMD_FAT
++#define CONFIG_DOS_PARTITION
++#endif
++
++/*
++ * Miscellaneous configurable options
++ */
++#define CONFIG_ENV_OVERWRITE
++#define CONFIG_BOOTDELAY		3
++#define CONFIG_LOADADDR			0x90800000
++
++#define CONFIG_SYS_LONGHELP		/* undef to save memory */
++#define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser */
++#define CONFIG_SYS_PROMPT		"Efika> "
++#define CONFIG_AUTO_COMPLETE
++#define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
++/* Print Buffer Size */
++#define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
++#define CONFIG_SYS_MAXARGS		16	/* max number of command args */
++#define CONFIG_SYS_BARGSIZE CONFIG_SYS_CBSIZE /* Boot Argument Buffer Size */
++
++#define CONFIG_SYS_MEMTEST_START	0x90000000
++#define CONFIG_SYS_MEMTEST_END		0x90010000
++
++#define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
++
++#define CONFIG_CMDLINE_EDITING
++
++/*-----------------------------------------------------------------------
++ * Physical Memory Map
++ */
++#define CONFIG_NR_DRAM_BANKS		1
++#define PHYS_SDRAM_1			CSD0_BASE_ADDR
++#define PHYS_SDRAM_1_SIZE		(512 * 1024 * 1024)
++
++#define CONFIG_SYS_SDRAM_BASE		(PHYS_SDRAM_1)
++#define CONFIG_SYS_INIT_RAM_ADDR	(IRAM_BASE_ADDR)
++#define CONFIG_SYS_INIT_RAM_SIZE	(IRAM_SIZE)
++
++#define CONFIG_SYS_INIT_SP_OFFSET \
++	(CONFIG_SYS_INIT_RAM_SIZE - GENERATED_GBL_DATA_SIZE)
++#define CONFIG_SYS_INIT_SP_ADDR \
++	(CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_SP_OFFSET)
++
++#define CONFIG_SYS_DDR_CLKSEL		0
++#define CONFIG_SYS_CLKTL_CBCDR		0x59E35145
++#define CONFIG_SYS_MAIN_PWR_ON
++
++#endif

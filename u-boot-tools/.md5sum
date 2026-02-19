@@ -1,3 +1,4 @@
 976528134b50bd9317e73a437a2ab331  boot.script
-3dac9a0b46fed77fc768ad3bd2d68c05  u-boot-2015.07.tar.bz2
-08b0d8ac989224d44d0288e50dd56077  update-uboot
+67ac0d7eda972ac2da0999aa3e35abb3  efikamx.patch
+7848f6fd197e2c6ef2eb483dd5bd2858  u-boot-2017.11.tar.bz2
+31fc90eae8c2ed8bdfc678259f326bd3  update-uboot

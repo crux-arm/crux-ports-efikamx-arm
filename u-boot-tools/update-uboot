@@ -1,6 +1,8 @@
-#!/bin/bash
+#!/bin/sh
+
 #
 # update-uboot is a stub for running mkimage to re-generate boot.scr
+#
 
 BASE_DIR=${1:-$(pwd)}
 UBOOT_MKIMAGE=$(mkimage -V)

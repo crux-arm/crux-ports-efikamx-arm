@@ -4,24 +4,29 @@
 # Depends on:
 
 name=u-boot-tools
-version=2015.07
+version=2017.11
 release=1
-source=(ftp://ftp.denx.de/pub/u-boot/u-boot-$version.tar.bz2 \
-  boot.script update-uboot)
+source=(https://ftp.denx.de/pub/u-boot/u-boot-$version.tar.bz2
+        efikamx.patch boot.script update-uboot)
 
 build() {
   cd u-boot-$version
 
-  # use custom compiler flags
-  sed -e "/^HOSTCFLAGS/ s/-O2/\$(CUSTOMCFLAGS)/" -i Makefile
-
+  patch -p1 -i $SRC/efikamx.patch
   make mx51_efikamx_defconfig
-  make tools CUSTOMCFLAGS="$CFLAGS" TOOLSUBDIRS=""
-  make env
 
-  install -d -m 0755 $PKG/usr/{bin,man/man1}
-  install -m 0755 tools/{{dump,mk,mkenv}image,env/fw_printenv} $PKG/usr/bin
+  # use custom compiler flags
+  sed -e "/^HOSTCFLAGS/ s/-O2/\$(CUSTOMCFLAGS) -fcommon/" -i Makefile
+  sed -e "/^HOSTCXXFLAGS/ s/-O2/\$(CUSTOMCFLAGS) -fcommon/" -i Makefile
+
+  make V=1 tools CUSTOMCFLAGS="$CFLAGS"
+  make V=1 envtools CUSTOMCFLAGS="$CFLAGS"
+
+  install -d -m 0755 $PKG/usr/bin $PKG/etc $PKG/usr/man/man1
+  install -m 0755 tools/{dump,mk,mkenv}image $PKG/usr/bin
+  install -m 0755 tools/env/fw_printenv $PKG/usr/bin
   ln -sf fw_printenv $PKG/usr/bin/fw_setenv
+  install -m 0755 tools/env/fw_env.config $PKG/etc
   install -m 0644 doc/mkimage.1 $PKG/usr/man/man1
 
   install -D -m 0644 $SRC/boot.script $PKG/boot/boot.script
