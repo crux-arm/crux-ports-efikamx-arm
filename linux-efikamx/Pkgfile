@@ -1,0 +1,60 @@
+# Description: Linux 3.x Kernel binaries for EfikaMX
+# URL: https://github.com/genesi/linux-testing
+# Maintainer: CRUX-ARM System Team, devel at crux-arm dot nu
+# Depends on: gcc48 u-boot-tools
+
+name=linux-efikamx
+version=3.2.23
+release=1
+
+source=(https://github.com/genesi/linux-testing/archive/refs/heads/master.zip \
+  config-$version)
+
+build() {
+  cd linux-testing-master
+
+  # use short version number (e.g 3.2.23)
+  sed 's/EXTRAVERSION =.*/EXTRAVERSION =/' -i Makefile
+
+  # fix recent versions of bison
+  sed -i 's/^\(YYLTYPE yylloc;\)/extern YYLTYPE yylloc;/' scripts/dtc/dtc-lexer.*
+  # fix recent versions of perl
+  sed -i 's/defined(\(@[a-zA-Z0-9_]*\))/\1/g' kernel/timeconst.pl
+
+  # compile with gcc 4.8
+  unset CFLAGS CPPFLAGS LDFLAGS
+  export HOSTCC=/usr/gcc48/bin/gcc
+  export HOSTCXX=/usr/gcc48/bin/g++
+  export HOSTLD=/usr/gcc48/bin/ld
+  export HOSTAR=/usr/gcc48/bin/ar
+  export HOSTCFLAGS="-fcommon"
+  export HOSTLDFLAGS="-fcommon"
+  export ARCH=arm
+  export CROSS_COMPILE=/usr/gcc48/bin/arm-unknown-linux-gnueabihf-
+  export LD_LIBRARY_PATH=/usr/gcc48/lib:/usr/gcc48/arm-unknown-linux-gnueabihf/lib
+
+  # zImage
+  make mrproper
+  cp $SRC/config-$version .config
+
+  make -j1 zImage
+
+  # config
+  install -d -m 0755 $PKG/boot
+  install -m 0644 .config $PKG/boot/config-$version-efikamx
+
+  # uImage
+  mkimage -A arm -O linux -C none \
+    -T kernel \
+    -a 0x90008000 \
+    -e 0x90008000 \
+    -n "CRUX-ARM kernel-efikamx $version" \
+    -d arch/arm/boot/zImage \
+    $PKG/boot/uImage-$version-efikamx
+
+  # modules and firmware
+  make modules
+  install -d -m 0755 $PKG/lib/{firmware,modules}
+  make modules_install INSTALL_MOD_PATH=$PKG
+  rm -f $PKG/lib/modules/*/{source,build}
+}
